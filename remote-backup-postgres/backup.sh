@@ -13,7 +13,7 @@ DATABSE_USER=postgres
 # Local o'zingizni kompyuteringiz userini kiriting
 LOCAL_USER=ismoilovdev
 # O'zingizni kompyuteringizni IP adresini kiriting
-LOCAL_IP=192.168.1.44
+LOCAL_IP=192.168.1.67
 # Kompyuteringizda backuplar qayerda turishini belgilang
 # bu yerda avtomatik backup-psql jildida saqlanadi
 LOCAL_BACKUP_DIR=~/backup-psql
