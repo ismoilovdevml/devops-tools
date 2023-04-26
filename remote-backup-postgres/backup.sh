@@ -18,8 +18,11 @@ LOCAL_IP=192.168.1.67
 # bu yerda avtomatik backup-psql jildida saqlanadi
 LOCAL_BACKUP_DIR=~/backup-psql
 
+# Olingan database backup nomiga qachoon olinganini yoizb qo'yadi yil oy kun soat minut sekund
+CURRENT_DATETIME=$(date "+%Y-%m-%d_%H-%M-%S")
+
 # Backuplar saqlanadigan jild ochish
 mkdir -p $LOCAL_BACKUP_DIR
 
 # Postgresql remote backup olish
-pg_dump -h $SERVER_IP -p 5432 -Fc -U $DATABSE_USER $DATABASE_NAME > $LOCAL_BACKUP_DIR/$DATABASE_NAME-new_backup.dump
+pg_dump -h $SERVER_IP -p 5432 -Fc -U $DATABSE_USER $DATABASE_NAME > $LOCAL_BACKUP_DIR/${DATABASE_NAME}_${CURRENT_DATETIME}_backup.dump
