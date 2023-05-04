@@ -25,4 +25,8 @@ CURRENT_DATETIME=$(date "+%Y-%m-%d_%H-%M-%S")
 mkdir -p $LOCAL_BACKUP_DIR
 
 # Postgresql remote backup olish
-pg_dump -h $SERVER_IP -p 5432 -Fc -U $DATABSE_USER $DATABASE_NAME > $LOCAL_BACKUP_DIR/${DATABASE_NAME}_${CURRENT_DATETIME}_backup.dump
+
+# .dump qilib olish uchun
+# pg_dump -h $SERVER_IP -p 5432 -Fc -U $DATABSE_USER $DATABASE_NAME > $LOCAL_BACKUP_DIR/${DATABASE_NAME}_${CURRENT_DATETIME}_backup.dump
+# .sql qilib olish uchun
+pg_dump -h $SERVER_IP -p 5432 -Fp -U $DATABSE_USER $DATABASE_NAME > $LOCAL_BACKUP_DIR/${DATABASE_NAME}_${CURRENT_DATETIME}_backup.sql
