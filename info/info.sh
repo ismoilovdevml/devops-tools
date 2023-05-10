@@ -44,6 +44,7 @@ for cmd in whois host dig; do
     fi
 done
 
+echo -e "${LIGHT_GREEN} ....."
 cat << "EOF"
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣤⡴⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣴⣿⠟⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -73,14 +74,27 @@ cat << "EOF"
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
 EOF
 
+echo -e "${LIGHT_BLUE} Saytlar domeni orqali malumotlar yig'adigan va sayt zaifliklarini qidiradigan dastur"
+echo -e "${LIGHT_BLUE} Muallif: Otabek Ismoilov"
+echo -e "${LIGHT_BLUE} Source Code: https://github.com/ismoilovdevml/devops-tools/tree/master/info"
+echo -e "${LIGHT_BLUE} Telegram: https://t.me/Otabek_Ismoilov"
 
 
 if [ -z "$1" ]; then
-    echo -e "${GREEN}Iltimos sayt manzilini kiriting:${YELLOW}"
+    echo -e "${GREEN}Iltimos sayt manzilini kiriting (namuna: google.com):${YELLOW}"
     read domain
     else
         domain=$1
 fi
+
+echo -e "${GREEN}Iltimos, natijalarni saqlash uchun fayl nomini kiriting (namuna: info.txt):${YELLOW}"
+read output_file
+
+exec > >(tee -i $output_file)
+exec 2>&1
+
+echo -e "${LIGHT_BLUE} Tekshiruv boshlandi jarayon biroz vaqt oladi :)"
+
 
 echo -e "${YELLOW} ${domain}${GREEN} 'dig' bilan tekshirilmoqda "
 dig $domain
@@ -111,3 +125,31 @@ echo -e "${YELLOW} ${ip_address}${GREEN} 'host' bilan tekshirilmoqda"
 host $ip_address
 
 echo -e "${YELLOW}${domain} domeni ${ip_address}${YELLOW} ip manzili  bo'yicha ma'lumotlar izlash yakunlandi."
+
+echo -e "${YELLOW} ${ip_address}${GREEN} 'nmap' orqali tekshiruv boshlandi"
+
+nmap -p- $ip_address
+
+
+echo -e "${YELLOW} ${ip_address}${GREEN} 'nmap' orqali  zaifliklar tekshiruvi boshlandi"
+
+nmap -sV --script=vuln $ip_address
+
+
+echo -e "${LIGHT_BLUE} Tekshiruv yakunlandi"
+
+cat << "EOF"
+
+⠀⣰⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣴⡾
+⠀⠀⣿⡍⠛⠲⣶⣄⣀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣠⡴⠞⠉⣠⡞⠀⠀
+⠀⠀⠘⣽⢷⣦⣌⣈⠋⡚⠿⣦⡀⠀⠀⣴⣶⡄⠀⠀⣠⡶⠚⠛⣙⣭⠠⣤⣶⣯⠆⠀⠀⠀
+⠀⠀⠀⣼⣷⣀⠀⠀⠈⠀⠀⠀⢻⡇⠺⡿⠛⣿⡅⠀⢿⠀⠀⣼⠿⣫⣭⣠⣤⡶⠂⠀⠀⠀
+⠀⠀⠀⠀⠉⠛⠿⣹⣾⠔⠃⠀⠈⠳⠾⠏⠀⠻⣷⡺⠋⠀⣤⣸⣷⣶⡾⠖⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠈⠒⠷⣿⡻⣞⣀⣄⣀⣀⡄⠀⠀⣠⣄⣸⡿⣾⣿⡽⡄⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠟⠯⣽⢿⡿⠃⠀⢀⣿⡙⠑⠙⠛⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣯⣦⣾⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣼⣿⣿⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣿⢩⡿⠘⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⣽⡃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+
+EOF
