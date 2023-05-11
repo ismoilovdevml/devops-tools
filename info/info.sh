@@ -38,7 +38,7 @@ for cmd in whois host dig; do
             sudo apt-get update
             sudo apt-get install -y $cmd
         else
-            echo "Ushbu script faqat Arch linux va debianbasedlarni qo'llab quvvatlaydi"
+            echo "Ushbu script faqat Arch Linux va Debian based operatsion sistemalarni qo'llab quvvatlaydi"
             exit 1
         fi
     fi
