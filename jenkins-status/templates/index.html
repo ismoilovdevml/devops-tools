@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jenkins Job Status</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1 class="my-3">Jenkins Job Status</h1>
+    {% for job in jobs %}
+    <div class="card folder-card">
+        <div class="card-body">
+            <h5 class="card-title">{{ job.name }}</h5>
+            <p class="card-text">Last Build Status:
+                <span class="job-status {% if job.status == 'SUCCESS' %}success{% endif %}">
+                    {% if job.status == 'SUCCESS' %}
+                    <span class="badge badge-success">{{ job.status }}</span>
+                    {% elif job.status == 'FAILURE' %}
+                    <span class="badge badge-danger">{{ job.status }}</span>
+                    {% else %}
+                    <span class="badge badge-secondary">{{ job.status }}</span>
+                    {% endif %}
+                </span>
+            </p>
+            <p class="card-text">Last Build Time: {{ job.timestamp }}</p>
+            {% if job.branches %}
+            <div class="card-columns">
+                {% for branch in job.branches %}
+                <div class="card branch-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ branch.name }}</h5>
+                        <p class="card-text">Status:
+                            {% if branch.status == 'SUCCESS' %}
+                            <span class="badge badge-success">{{ branch.status }}</span>
+                            {% elif branch.status == 'FAILURE' %}
+                            <span class="badge badge-danger">{{ branch.status }}</span>
+                            {% else %}
+                            <span class="badge badge-secondary">{{ branch.status }}</span>
+                            {% endif %}
+                        </p>
+                        <p class="card-text">Build Time: {{ branch.timestamp }}</p>
+                        <p class="card-text">Elapsed Time: {{ branch.elapsed_time }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+    <div class="card transparent-card">
+        <div class="card-body">
+            <p class="card-text">Created by Otabek Ismoilov</p>
+            <p class="card-text"><i class="fab fa-github"></i> <a href="[https://github.com/ismoilovdevml]">ismoilovdevml</a></p>
+        </div>
+    </div>
+</div>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/js/all.min.js"></script>
+</body>
+</html>

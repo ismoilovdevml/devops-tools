@@ -128,7 +128,7 @@ echo -e "${YELLOW}${domain} domeni ${ip_address}${YELLOW} ip manzili  bo'yicha m
 
 echo -e "${YELLOW} ${ip_address}${GREEN} 'nmap' orqali tekshiruv boshlandi"
 
-nmap -p- $ip_address
+# nmap -p- $ip_address
 
 
 echo -e "${YELLOW} ${ip_address}${GREEN} 'nmap' orqali  zaifliklar tekshiruvi boshlandi"

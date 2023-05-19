@@ -1,0 +1,127 @@
+.folder-card {
+    background-color: rgba(0, 0, 255, 0.1);
+    transition: transform 0.3s ease-in-out;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.folder-card:hover {
+    transform: scale(1.05);
+}
+
+.branch-card {
+    background-color: rgba(81, 255, 0, 0.5);
+    margin-top: 10px;
+    transition: transform 0.3s ease-in-out;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.branch-card:hover {
+    transform: scale(1.05);
+}
+
+.author-info {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #999;
+    transition: transform 0.3s ease-in-out;
+}
+
+.author-info:hover {
+    transform: scale(1.1);
+}
+.job-status {
+    text-align: center;
+    color: #000;
+}
+
+.job-status.success {
+    color: green;
+}
+
+.job-status.animation {
+    animation: greenAnimation 4s;
+}
+
+@keyframes greenAnimation {
+    0% {
+        color: green;
+    }
+    100% {
+        color: #000;
+    }
+}
+
+.job-status {
+    text-align: center;
+    color: #000;
+}
+
+.job-status.success {
+    color: green;
+}
+
+.job-status.animation {
+    animation: greenAnimation 4s;
+}
+
+@keyframes greenAnimation {
+    0% {
+        color: green;
+    }
+    100% {
+        color: #000;
+    }
+}
+
+/* Author Info */
+.author-info {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 14px;
+    color: #999;
+    transition: transform 0.3s ease-in-out;
+}
+
+.author-info:hover {
+    transform: scale(1.1);
+}
+
+/* Transparent Card */
+.transparent-card {
+    background-color: rgba(0, 21, 255, 0.459);
+    transition: transform 0.3s ease-in-out;
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+    color: #fff;
+}
+
+.transparent-card.smaller-card {
+    width: 200px;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 20px;
+}
+
+.transparent-card .card-body {
+    padding: 10px;
+}
+
+.transparent-card .card-text {
+    margin-bottom: 5px;
+}
+
+.transparent-card .fab {
+    margin-right: 5px;
+}
+
+.transparent-card:hover {
+    transform: scale(1.20);
+    box-shadow: 0 0 30px rgb(3, 30, 81);
+}
