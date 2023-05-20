@@ -22,17 +22,6 @@
     transform: scale(1.05);
 }
 
-.author-info {
-    margin-top: 20px;
-    text-align: center;
-    font-size: 14px;
-    color: #999;
-    transition: transform 0.3s ease-in-out;
-}
-
-.author-info:hover {
-    transform: scale(1.1);
-}
 .job-status {
     text-align: center;
     color: #000;
@@ -40,6 +29,10 @@
 
 .job-status.success {
     color: green;
+}
+
+.job-status.running {
+    color: orange;
 }
 
 .job-status.animation {
@@ -55,29 +48,6 @@
     }
 }
 
-.job-status {
-    text-align: center;
-    color: #000;
-}
-
-.job-status.success {
-    color: green;
-}
-
-.job-status.animation {
-    animation: greenAnimation 4s;
-}
-
-@keyframes greenAnimation {
-    0% {
-        color: green;
-    }
-    100% {
-        color: #000;
-    }
-}
-
-/* Author Info */
 .author-info {
     margin-top: 20px;
     text-align: center;
@@ -90,7 +60,6 @@
     transform: scale(1.1);
 }
 
-/* Transparent Card */
 .transparent-card {
     background-color: rgba(0, 21, 255, 0.459);
     transition: transform 0.3s ease-in-out;

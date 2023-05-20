@@ -4,6 +4,7 @@
     <title>Jenkins Job Status</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
+    <meta http-equiv="refresh" content="3" >
 </head>
 <body>
 <div class="container">
@@ -18,6 +19,8 @@
                     <span class="badge badge-success">{{ job.status }}</span>
                     {% elif job.status == 'FAILURE' %}
                     <span class="badge badge-danger">{{ job.status }}</span>
+                    {% elif job.status == 'RUNNING' %}
+                    <span class="badge badge-warning">{{ job.status }}</span>
                     {% else %}
                     <span class="badge badge-secondary">{{ job.status }}</span>
                     {% endif %}
@@ -35,6 +38,8 @@
                             <span class="badge badge-success">{{ branch.status }}</span>
                             {% elif branch.status == 'FAILURE' %}
                             <span class="badge badge-danger">{{ branch.status }}</span>
+                            {% elif branch.status == 'RUNNING' %}
+                            <span class="badge badge-warning">{{ branch.status }}</span>
                             {% else %}
                             <span class="badge badge-secondary">{{ branch.status }}</span>
                             {% endif %}
