@@ -11,7 +11,7 @@ Dasturni ishga tushirish uchu sizda python o'rnatilgan bo'lishi kerak
 
 Dasturni konfigratsiya qilib o'zinhgizning jenkins url mazilini kiritishingiz kerak
 
-![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/imagine.png)
+![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/image.png)
 
 Ishga tushirish
 
