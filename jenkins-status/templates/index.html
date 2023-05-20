@@ -4,53 +4,40 @@
     <title>Jenkins Job Status</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link href="{{ url_for('static', filename='styles.css') }}" rel="stylesheet">
-    <meta http-equiv="refresh" content="3" >
+    <meta http-equiv="refresh" content="30" >
 </head>
 <body>
 <div class="container">
     <h1 class="my-3">Jenkins Job Status</h1>
-    {% for job in jobs %}
+    {% for folder in folders %}
     <div class="card folder-card">
         <div class="card-body">
-            <h5 class="card-title">{{ job.name }}</h5>
-            <p class="card-text">Last Build Status:
-                <span class="job-status {% if job.status == 'SUCCESS' %}success{% endif %}">
-                    {% if job.status == 'SUCCESS' %}
-                    <span class="badge badge-success">{{ job.status }}</span>
-                    {% elif job.status == 'FAILURE' %}
-                    <span class="badge badge-danger">{{ job.status }}</span>
-                    {% elif job.status == 'RUNNING' %}
-                    <span class="badge badge-warning">{{ job.status }}</span>
-                    {% else %}
-                    <span class="badge badge-secondary">{{ job.status }}</span>
-                    {% endif %}
-                </span>
-            </p>
-            <p class="card-text">Last Build Time: {{ job.timestamp }}</p>
-            {% if job.branches %}
-            <div class="card-columns">
-                {% for branch in job.branches %}
-                <div class="card branch-card">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ branch.name }}</h5>
-                        <p class="card-text">Status:
-                            {% if branch.status == 'SUCCESS' %}
-                            <span class="badge badge-success">{{ branch.status }}</span>
-                            {% elif branch.status == 'FAILURE' %}
-                            <span class="badge badge-danger">{{ branch.status }}</span>
-                            {% elif branch.status == 'RUNNING' %}
-                            <span class="badge badge-warning">{{ branch.status }}</span>
-                            {% else %}
-                            <span class="badge badge-secondary">{{ branch.status }}</span>
-                            {% endif %}
-                        </p>
-                        <p class="card-text">Build Time: {{ branch.timestamp }}</p>
-                        <p class="card-text">Elapsed Time: {{ branch.elapsed_time }}</p>
+            <h4 class="card-title">{{ folder.name }}</h4>
+            {% for multibranch in folder.multibranches %}
+            <div class="card multibranch-card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ multibranch.name }}</h5>
+                    {% for branch in multibranch.branches %}
+                    <div class="card branch-card">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ branch.name }}</h6>
+                            <p class="card-text">Status:
+                                {% if branch.status == 'SUCCESS' %}
+                                <span class="badge badge-success">{{ branch.status }}</span>
+                                {% elif branch.status == 'FAILURE' %}
+                                <span class="badge badge-danger">{{ branch.status }}</span>
+                                {% else %}
+                                <span class="badge badge-secondary">{{ branch.status }}</span>
+                                {% endif %}
+                            </p>
+                            <p class="card-text">Build Time: {{ branch.timestamp }}</p>
+                            <p class="card-text">Elapsed Time: {{ branch.elapsed_time }}</p>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
-            {% endif %}
+            {% endfor %}
         </div>
     </div>
     {% endfor %}
