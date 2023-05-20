@@ -1,5 +1,8 @@
 ### Jenkinsni Monitoring qilish uchun web dastur
 
+Muammo: Muammo shunda ediki bizda Jenkins bor va biz Jenkinsni monitoring qilib turishimiz kerak edi biz buni web dastur yozish orqali muammoga yechim berdik. Dastur hozir juda oddiy bu rivojlantiriladi.
+Dastur Jenkins API dan foydalangan holda barcha statusni ko'radi. Dastur ishlab turgan ishlamay qolgan va ishlab turganligini real vaqtda ko'rsatib turadi. Dastur har 2 sekunda ma'lumotlarni yangilab turadi.
+
 ![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/jenkins-status3.png)
 ![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/jenkins-status4.png)
 ![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/jenkins-status2.png)
@@ -9,9 +12,11 @@ Dastur python dasturlash tilining Flask fremworkidan foydalanib yasalgan.
 
 Dasturni ishga tushirish uchu sizda python o'rnatilgan bo'lishi kerak
 
-Dasturni konfigratsiya qilib o'zinhgizning jenkins url mazilini kiritishingiz kerak
+Dasturni konfigratsiya qilib o'zingizning jenkins url mazilini kiritishingiz kerak
 
 ![alt text](https://github.com/ismoilovdevml/devops-tools/blob/master/jenkins-status/assets/image.png)
+
+
 
 Ishga tushirish
 
