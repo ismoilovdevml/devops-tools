@@ -6,72 +6,69 @@ app = Flask(__name__)
 
 jenkins_url = 'http://192.168.1.170:8080'  # Replace with your Jenkins URL
 
-
 @app.route('/')
 def home():
-    folders = get_folders()
-    return render_template('index.html', folders=folders)
+    jobs = get_jobs()
+    return render_template('index.html', jobs=jobs)
 
-
-def get_folders():
-    response = requests.get(f'{jenkins_url}/api/json?tree=jobs[name,jobs[name,jobs[name,lastBuild[result,timestamp]]]]')
+def get_jobs():
+    response = requests.get(f'{jenkins_url}/api/json?tree=jobs[name,lastBuild[result,timestamp,building]]')
 
     if response.status_code == 200:
         data = response.json()
-        folders = []
+        jobs = []
 
         if 'jobs' in data:
-            for folder in data['jobs']:
-                folder_name = folder.get('name', 'N/A')
-                multibranches = get_multibranches(folder)
+            for job in data['jobs']:
+                last_build = job.get('lastBuild') if job.get('lastBuild') else {}
 
-                folders.append({
-                    'name': folder_name,
-                    'multibranches': multibranches
+                if last_build.get('building', False):
+                    status = 'RUNNING'
+                else:
+                    status = last_build.get('result', 'UNKNOWN')
+
+                jobs.append({
+                    'name': job.get('name', 'N/A'),
+                    'status': status,
+                    'timestamp': last_build.get('timestamp', 'N/A'),
+                    'branches': get_branches(job.get('name'))
                 })
 
-        return folders
+        return jobs
     else:
-        return [{'name': 'N/A', 'multibranches': []}]
+        return [{'name': 'N/A', 'status': 'ERROR', 'timestamp': 'N/A', 'branches': []}]
 
+def get_branches(job_name):
+    response = requests.get(f'{jenkins_url}/job/{job_name}/api/json?tree=jobs[name,lastBuild[result,timestamp,building]]')
 
-def get_multibranches(folder):
-    multibranches = []
+    if response.status_code == 200:
+        data = response.json()
+        branches = []
 
-    if 'jobs' in folder:
-        for multibranch in folder['jobs']:
-            multibranch_name = multibranch.get('name', 'N/A')
-            branches = get_branches(multibranch)
+        if 'jobs' in data:
+            for job in data['jobs']:
+                branch_name = job.get('name', 'N/A')
+                last_build = job.get('lastBuild') if job.get('lastBuild') else {}
 
-            multibranches.append({
-                'name': multibranch_name,
-                'branches': branches
-            })
+                if last_build.get('building', False):
+                    status = 'RUNNING'
+                else:
+                    status = last_build.get('result', 'UNKNOWN')
 
-    return multibranches
+                build_time = last_build.get('timestamp', 0) / 1000  # Convert milliseconds to seconds
+                build_datetime = datetime.fromtimestamp(build_time)
+                elapsed_time = datetime.now() - build_datetime
 
+                branches.append({
+                    'name': branch_name,
+                    'status': status,
+                    'timestamp': build_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                    'elapsed_time': str(timedelta(seconds=round(elapsed_time.total_seconds())))
+                })
 
-def get_branches(multibranch):
-    branches = []
-
-    if 'jobs' in multibranch:
-        for branch in multibranch['jobs']:
-            branch_name = branch.get('name', 'N/A')
-            last_build = branch.get('lastBuild') if branch.get('lastBuild') else {}
-
-            build_time = last_build.get('timestamp', 0) / 1000  # Convert milliseconds to seconds
-            build_datetime = datetime.fromtimestamp(build_time)
-            elapsed_time = datetime.now() - build_datetime
-
-            branches.append({
-                'name': branch_name,
-                'status': last_build.get('result', 'UNKNOWN'),
-                'timestamp': build_datetime.strftime('%Y-%m-%d %H:%M:%S'),
-                'elapsed_time': str(timedelta(seconds=round(elapsed_time.total_seconds())))
-            })
-
-    return branches
-
+        return branches
+    else:
+        return []
 
 if __name__ == '__main__':
     app.run(debug=True)

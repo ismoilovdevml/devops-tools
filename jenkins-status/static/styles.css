@@ -31,6 +31,10 @@
     color: green;
 }
 
+.job-status.running {
+    color: orange;
+}
+
 .job-status.animation {
     animation: greenAnimation 4s;
 }
@@ -63,6 +67,27 @@
     padding: 10px;
     border-radius: 5px;
     color: #fff;
+}
+
+.transparent-card.smaller-card {
+    width: 200px;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 20px;
+}
+
+.transparent-card .card-body {
+    padding: 10px;
+}
+
+.transparent-card .card-text {
+    margin-bottom: 5px;
+}
+
+.transparent-card .fab {
+    margin-right: 5px;
 }
 
 .transparent-card:hover {
