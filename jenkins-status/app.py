@@ -8,46 +8,46 @@ jenkins_url = 'http://192.168.1.170:8080'  # Replace with your Jenkins URL
 
 @app.route('/')
 def home():
-    jobs = get_jobs()
+    jobs = get_jobs(jenkins_url)
     return render_template('index.html', jobs=jobs)
 
-def get_jobs():
-    response = requests.get(f'{jenkins_url}/api/json?tree=jobs[name,lastBuild[result,timestamp,building]]')
+def get_jobs(url):
+    response = requests.get(f'{url}/api/json?tree=jobs[name,_class,url,lastBuild[result,timestamp,building]]')
+    jobs = []
 
     if response.status_code == 200:
         data = response.json()
-        jobs = []
 
         if 'jobs' in data:
             for job in data['jobs']:
-                last_build = job.get('lastBuild') if job.get('lastBuild') else {}
-
-                if last_build.get('building', False):
-                    status = 'RUNNING'
+                if job.get('_class') == 'com.cloudbees.hudson.plugins.folder.Folder':
+                    jobs.extend(get_jobs(job.get('url')))
                 else:
-                    status = last_build.get('result', 'UNKNOWN')
+                    last_build = job.get('lastBuild') if job.get('lastBuild') else {}
 
-                jobs.append({
-                    'name': job.get('name', 'N/A'),
-                    'status': status,
-                    'timestamp': last_build.get('timestamp', 'N/A'),
-                    'branches': get_branches(job.get('name'))
-                })
+                    if last_build.get('building', False):
+                        status = 'RUNNING'
+                    else:
+                        status = last_build.get('result', 'UNKNOWN')
 
-        return jobs
-    else:
-        return [{'name': 'N/A', 'status': 'ERROR', 'timestamp': 'N/A', 'branches': []}]
+                    jobs.append({
+                        'name': job.get('name', 'N/A'),
+                        'status': status,
+                        'timestamp': last_build.get('timestamp', 'N/A'),
+                        'branches': get_branches(job.get('name'), job.get('url'))
+                    })
 
-def get_branches(job_name):
-    response = requests.get(f'{jenkins_url}/job/{job_name}/api/json?tree=jobs[name,lastBuild[result,timestamp,building]]')
+    return jobs
+
+def get_branches(job_name, job_url):
+    response = requests.get(f'{job_url}/api/json?tree=jobs[name,lastBuild[result,timestamp,building]]')
+    branches = []
 
     if response.status_code == 200:
         data = response.json()
-        branches = []
 
         if 'jobs' in data:
             for job in data['jobs']:
-                branch_name = job.get('name', 'N/A')
                 last_build = job.get('lastBuild') if job.get('lastBuild') else {}
 
                 if last_build.get('building', False):
@@ -60,15 +60,13 @@ def get_branches(job_name):
                 elapsed_time = datetime.now() - build_datetime
 
                 branches.append({
-                    'name': branch_name,
+                    'name': job.get('name', 'N/A'),
                     'status': status,
                     'timestamp': build_datetime.strftime('%Y-%m-%d %H:%M:%S'),
                     'elapsed_time': str(timedelta(seconds=round(elapsed_time.total_seconds())))
                 })
 
-        return branches
-    else:
-        return []
+    return branches
 
 if __name__ == '__main__':
     app.run(debug=True)
