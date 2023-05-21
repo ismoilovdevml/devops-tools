@@ -27,3 +27,20 @@ python app.py
 ```
 
 Dastur http://127.0.0.1:5000 url mazilida ishlaydi
+
+## Docker bilan ishga tushirish
+
+```bash
+git clone https://github.com/ismoilovdevml/devops-tools.git
+cd devops-tools/jenkins-status
+sudo su
+sudo docker build -t jenkins-status .
+sudo docker run -p 5000:5000 jenkins-status
+```
+
+Bu dastur tizim ip addresining `5000` portida ishlaydi.
+
+```python
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
+```
