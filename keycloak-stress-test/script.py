@@ -3,10 +3,10 @@ import subprocess
 
 # Keycloak parameters
 HOSTNAME = "192.168.1.205:8080"    # Change this to your Keycloak server URL
-REALM = "Apex"
-CLIENT_ID = "identity"
-USER = "admin"
-PASSWORD = "Vj8FG4MCym"
+REALM = "Test"
+CLIENT_ID = "test"
+USER = "username"
+PASSWORD = "password"
 
 # JMeter parameters
 JMETER_PATH = "/usr/bin/"  # Update this to your JMeter path
