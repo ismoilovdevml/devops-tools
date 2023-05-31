@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Keycloak parameters
-HOSTNAME="192.168.1.204:8080"    # Change this to your Keycloak server URL
+HOSTNAME="192.168.1.205:8080"    # Change this to your Keycloak server URL
 REALM="Apex"
 CLIENT_ID="identity"
 USER="admin"
