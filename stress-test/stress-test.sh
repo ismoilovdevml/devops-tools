@@ -1,13 +1,13 @@
 #!/bin/bash
 
 # Replace 'ip_adress' with the IP address or URL of the target server you want to stress test.
-url="ip_adress"
+url="https://head.aic.uz/"
 
 # The total number of HTTP requests to be sent during the test.
 number_of_requests=60000
 
 # The number of concurrent requests to be sent at once.
-number_of_concurrent_requests=10
+number_of_concurrent_requests=100
 
 # This function sends multiple HTTP requests concurrently to the target URL.
 send_requests() {
