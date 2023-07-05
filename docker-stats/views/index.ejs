@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Container Stats</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        table {
+            color: black;
+            width: 100%;
+            background-color: #4CAF50;
+        }
+        th {
+            color: white;
+            background-color: #4CAF50;
+        }
+        .safe {
+            background-color: #58F702;
+        }
+        .warning {
+            background-color: #FACD00;
+        }
+        .danger {
+            background-color: #F43434;
+        }
+    </style>
+</head>
+<body>
+    <h1>Docker Container Stats</h1>
+    <table class="table table-striped">
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+    </table>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
