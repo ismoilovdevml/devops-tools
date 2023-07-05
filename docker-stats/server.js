@@ -38,7 +38,8 @@ io.on('connection', (socket) => {
                         value = value * 1024; // convert GiB to MiB
                         container.memUnit = 1; // GiB
                     } else { 
-                        container.memUnit = 0; // MiB
+                        container.memUnit = 0; // assume MiB if not GiB
+                        // Adjust this part if there are more units you need to handle
                     }
 
                     container.memValue = value;

@@ -1,6 +1,5 @@
 var socket = io();
 socket.on('docker stats', function(containers){
-    containers.sort((a, b) => b.memUnit - a.memUnit || b.memValue - a.memValue);
     var headersHtml = '';
     if (containers.length > 0) {
         for (var key in containers[0]) {
