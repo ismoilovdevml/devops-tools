@@ -1,0 +1,19 @@
+{
+  "name": "docker-stats",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "Otabek Ismoilov",
+  "license": "ISC",
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.1"
+  }
+}
