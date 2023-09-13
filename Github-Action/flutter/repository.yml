@@ -1,0 +1,49 @@
+name: Flutter CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.13.3' 
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Get current date
+        run: echo "CURRENT_DATE=$(date +%Y-%m-%d-%H-%M-%S)" >> $GITHUB_ENV
+
+      - name: Rename APK with build date
+        run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-$CURRENT_DATE.apk
+
+      - name: Clone target repository
+        run: git clone https://x-access-token:${{ secrets.REPO_ACCESS_TOKEN }}@github.com/ismoilovdevml/release target-repo
+
+      - name: Create new directory for current build in the target repository
+        run: mkdir -p target-repo/releases/$CURRENT_DATE/android
+
+      - name: Move APK to new directory in the target repository
+        run: mv build/app/outputs/flutter-apk/app-release-$CURRENT_DATE.apk target-repo/releases/$CURRENT_DATE/android/
+
+      - name: Commit and push to the target repository
+        run: |
+          cd target-repo
+          git config user.name "GitHub Action"
+          git config user.email "githubaction@github.com"
+          git add releases/$CURRENT_DATE/android/app-release-$CURRENT_DATE.apk
+          git commit -m "Add release $CURRENT_DATE"
+          git push
