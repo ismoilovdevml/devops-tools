@@ -6,8 +6,8 @@ on:
       - main
 
 env:
-  IMAGE_NAME: digitalgenerationci
-  CONTAINER_NAME: dotnet
+  IMAGE_NAME: username #bu yerga dockerhub username yoki registry registy nomi
+  CONTAINER_NAME: dotnet # docker bu repositoriya nomi yoki registry repozitoriya nomi
   DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
   DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
   SSH_HOST: ${{ secrets.SERVER_IP }}
