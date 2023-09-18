@@ -2,8 +2,9 @@ name: Flutter CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
@@ -25,7 +26,13 @@ jobs:
         run: flutter build apk --release
 
       - name: Get current date
-        run: echo "CURRENT_DATE=$(date +%Y-%m-%d-%H-%M-%S)" >> $GITHUB_ENV
+        run: echo "CURRENT_DATE=$(date +%Y-%m-%d-%H-%on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - devM-%S)" >> $GITHUB_ENV
 
       - name: Rename APK with build date
         run: mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/app-release-$CURRENT_DATE.apk
