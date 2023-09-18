@@ -2,9 +2,9 @@ name: .NET 7 Build and Test
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ main ]
   pull_request:
-    branches: [ dev ]
+    branches: [ main ]
 
 jobs:
   build_and_test:
@@ -28,19 +28,3 @@ jobs:
 
     - name: Test
       run: dotnet test --no-build
-      
-    - name: Calculate new version
-      id: calc_version
-      run: echo "::set-output name=NEW_VERSION::$(echo $(($(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+$' | head -n 1 | tr -d v | awk -F. '{print $2 * 10 + $1 * 1000}') + 1)) | awk '{print int($1 / 1000)"."int($1 % 1000 / 10)}')"
-      shell: bash
-
-    - name: Create GitHub release
-      uses: gh-actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
-      with:
-        tag_name: v${{ steps.calc_version.outputs.NEW_VERSION }}
-        release_name: Release ${{ steps.calc_version.outputs.NEW_VERSION }}
-        body: |
-          Changes in this release:
-          - ...
