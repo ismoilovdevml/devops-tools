@@ -1,0 +1,62 @@
+pipeline {
+    agent any
+
+    environment {
+        GIT_URL = "https://github.com/repo_url.git" // Github repository url
+        REGISTRY_URL="127.0.0.1:5000/username/backend" // Registry url
+        GITHUB_TOKEN=credentials('github_token')
+        BUILD_BRANCH='master' // branch 
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage(' Setup Environment') {
+            steps{
+                dir("repo_url"){
+                    git branch: BRANCH_NAME, url: GIT_URL, credentialsId: 'github_token'
+                }
+            }
+        }
+        stage("Build Application") {
+            steps{
+                withCredentials([string(
+                        credentialsId: 'github-api-token',
+                        variable: 'GITHUB_API_TOKEN'
+                     )]) {
+                        sh 'echo $GITHUB_API_TOKEN | docker login 127.0.0.1:5000 -u devops --password-stdin' // devops => docker registry user
+                     }
+                sh "docker build . -t ${REGISTRY_URL}:${BUILD_NUMBER} -f Dockerfile"
+                sh "docker tag ${REGISTRY_URL}:${BUILD_NUMBER} ${REGISTRY_URL}:latest"
+                sh "docker push ${REGISTRY_URL}:latest"
+                sh "docker push ${REGISTRY_URL}:${BUILD_NUMBER}"
+                
+                sh "docker image rm -f ${REGISTRY_URL}:latest"
+                sh "docker image rm -f ${REGISTRY_URL}:${BUILD_NUMBER}"
+            }
+        }
+
+        stage("Run Application to Development Servers"){
+            when {
+                expression {
+                    BRANCH_NAME == 'master'
+                }
+            }
+            steps{
+                withCredentials([string(
+                        credentialsId: 'github-api-token',
+                        variable: 'GITHUB_API_TOKEN'
+                     )]) {
+                        // sshagent => server_user => ssh server_user key
+                        sshagent(['server_user']) { 
+                            sh 'ssh -o StrictHostKeyChecking=no server_user@127.0.0.1 "/home/server_user/deployer.sh --image=$REGISTRY_URL:$BUILD_NUMBER --container-port=4001 --system-port=4001 --registry-host=127.0.0.1:5000 --container-name=backend --registry-token=$GITHUB_API_TOKEN --registry-user=devops"'
+                        }
+                     }
+            }
+        }
+    }
+}
+
+// deployer.sh => https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/deployer.sh
