@@ -1,0 +1,40 @@
+---
+- name: Manage GCP VM instances
+  hosts: localhost
+  gather_facts: no
+  vars_prompt:
+    - name: "action"
+      prompt: "Enter action (create/delete/start/stop)"
+      private: no
+
+  tasks:
+    - name: Create VM instances
+      when: action == 'create'
+      shell: >
+        gcloud compute instances create vm-instance-1
+        --zone=us-central1-a
+        --machine-type=e2-medium
+        --image-family=ubuntu-2004-lts
+        --image-project=ubuntu-os-cloud
+        --boot-disk-size=30GB
+        --boot-disk-type=pd-ssd
+        --scopes=default,cloud-platform
+
+    - name: Delete VM instance 1
+      when: action == 'delete'
+      shell: >
+        gcloud compute instances delete vm-instance-1
+        --zone=us-central1-a
+        --quiet
+
+    - name: Start VM instance 1
+      when: action == 'start'
+      shell: >
+        gcloud compute instances start vm-instance-1
+        --zone=us-central1-a
+
+    - name: Stop VM instance 1
+      when: action == 'stop'
+      shell: >
+        gcloud compute instances stop vm-instance-1
+        --zone=us-central1-a
