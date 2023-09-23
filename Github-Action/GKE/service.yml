@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: personal-project-service
+spec:
+  selector:
+    app: personal-project
+  ports:
+    - protocol: TCP
+      port: 4003 # The port you want to expose outside
+      targetPort: 8080 # The port your application is running on inside the container
+  type: LoadBalancer

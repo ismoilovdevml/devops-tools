@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - deployment.yml
+  - service.yml
+images:
+  - name: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG
+    newName: us-central1-docker.pkg.dev/$PROJECT_ID/personal-project-container
+    newTag: latest

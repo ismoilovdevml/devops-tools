@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: personal-project
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: personal-project
+  template:
+    metadata:
+      labels:
+        app: personal-project
+    spec:
+      containers:
+      - name: personal-project-container
+        image: LOCATION-docker.pkg.dev/PROJECT_ID/REPOSITORY/IMAGE:TAG 
+        ports:
+        - containerPort: 8080 # Application is running on port 8080 inside the container
