@@ -1,0 +1,17 @@
+name: Code Checkout
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+            repository: ismoilovdevml/devops-tools
+            path: devops-tools
