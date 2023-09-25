@@ -55,7 +55,7 @@ jobs:
             docker rm ${{ env.CONTAINER_NAME }} || true
             docker rmi gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest || true
             docker pull gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
-            docker run -d --name ${{ env.CONTAINER_NAME }} -p 4002:4002 gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+            docker run -d --name ${{ env.CONTAINER_NAME }} --restart always -p 4002:4002 gcr.io/${{ env.GCP_PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
 
 # serverda docker login qilish Google Container Registry (GCR)
 # cat /path/to/your-service-account-file.json | docker login -u _json_key --password-stdin https://gcr.io
