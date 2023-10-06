@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rust-chat-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: rust-chat-app
+  template:
+    metadata:
+      labels:
+        app: rust-chat-app
+    spec:
+      containers:
+      - name: rust-container
+        image: gcr.io/PROJECT_ID/IMAGE:latest
+        ports:
+        - containerPort: 8080

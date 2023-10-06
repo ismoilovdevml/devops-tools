@@ -1,0 +1,59 @@
+
+name: Build and Deploy to Kubernetes
+
+on:
+    push:
+      branches:
+        - main
+
+
+env:
+  IMAGE_NAME: rust-container
+  PROJECT_ID: ${{ secrets.PROJECT_ID }}
+  GCR_SECRET: ${{ secrets.GCR_SECRET }}
+  DEPLOYMENT_NAME: rust-chat-app
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Setup Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0.2.1
+      with:
+        service_account_key: ${{ env.GCR_SECRET }}
+        project_id: ${{ env.PROJECT_ID }}
+
+    - name: Configure Docker to use the gcloud command-line tool as a credential helper
+      run: |
+          gcloud --quiet auth configure-docker
+
+    - name: Build and push Docker Image
+      uses: docker/build-push-action@v2
+      with:
+          context: .
+          push: true
+          tags: gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
+
+    # Set up kustomize
+    - name: Set up Kustomize
+      run: |
+        curl -sfLo kustomize https://github.com/kubernetes-sigs/kustomize/releases/download/v3.1.0/kustomize_3.1.0_linux_amd64
+        chmod u+x ./kustomize
+    
+    # Deploy to Kubernetes
+    - name: Deploy to Kubernetes
+      env:
+        KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+      run: |
+        echo "$KUBE_CONFIG_DATA" > kubeconfig
+        export KUBECONFIG=kubeconfig
+        ./kustomize edit set image gcr.io/PROJECT_ID/IMAGE:TAG=gcr.io/$PROJECT_ID/$IMAGE_NAME:$GITHUB_SHA
+        ./kustomize build . | kubectl apply -f -
+        kubectl rollout status deployment/rust-chat-app
+        kubectl get services -o wide
