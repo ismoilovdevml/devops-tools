@@ -6,10 +6,7 @@ metadata:
   namespace: default
 spec:
   strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 25%
-      maxSurge: 25%
+    type: Recreate
   replicas: 4
   selector:
     matchLabels:
