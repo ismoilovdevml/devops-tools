@@ -163,7 +163,8 @@ echo -e "${NC}"
 echo -e "${LIGHT_GREEN}Initializing Kubernetes...${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_BLUE}"
-sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --control-plane-endpoint=k8s-master
+sudo kubeadm init --pod-network-cidr=10.244.0.0/16
+# sudo kubeadm init --pod-network-cidr=10.10.0.0/16 --control-plane-endpoint=k8s-master
 echo -e "${NC}"
 
 # Setup kubectl config
