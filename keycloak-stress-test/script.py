@@ -2,7 +2,7 @@ import os
 import subprocess
 
 # Keycloak parameters
-HOSTNAME = "192.168.1.205:8080"    # Change this to your Keycloak server URL
+HOSTNAME = "0.0.0.0:8080"    # Change this to your Keycloak server URL
 REALM = "Test"
 CLIENT_ID = "test"
 USER = "username"

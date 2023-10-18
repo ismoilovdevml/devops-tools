@@ -57,7 +57,7 @@ spec:
 kubectl apply -f address-pool.yml 
 ```
 
-### NINX Ingress
+### NGINX Ingress
 
 ```bash
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -121,7 +121,8 @@ sudo systemctl status haproxy
 ```
 
 ### Install And Configure Cert-Manager
-https://cert-manager.io/docs/installation/helm/
+
+[Official Documentation](https://github.com/ismoilovdevml/devops-tools/blob/master/k8s/Network/README.md)
 
 ```bash
 helm repo add jetstack https://charts.jetstack.io
@@ -335,7 +336,7 @@ kubectl get pod -n monitoring
 kubectl get ingress -n monitoring
 ```
 
-Add data sourece prometheus url
+Add data source prometheus url
 
 ```bash
 http://prometheus-server.monitoring.svc.cluster.local/

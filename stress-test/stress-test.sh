@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Replace 'ip_adress' with the IP address or URL of the target server you want to stress test.
-url="https://head.aic.uz/"
+url="https://google.com/"
 
 # The total number of HTTP requests to be sent during the test.
 number_of_requests=60000
