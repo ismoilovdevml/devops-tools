@@ -76,20 +76,20 @@ sudo nano /etc/haproxy/haproxy.cfg
 
 ```yaml
 defaults
-	log	global
-	mode	tcp
-#	option	httplog
-	option	dontlognull
+    log	global
+    mode	tcp
+#   option	httplog
+    option	dontlognull
     timeout connect 5000
     timeout client  50000
     timeout server  50000
-	errorfile 400 /etc/haproxy/errors/400.http
-	errorfile 403 /etc/haproxy/errors/403.http
-	errorfile 408 /etc/haproxy/errors/408.http
-	errorfile 500 /etc/haproxy/errors/500.http
-	errorfile 502 /etc/haproxy/errors/502.http
-	errorfile 503 /etc/haproxy/errors/503.http
-	errorfile 504 /etc/haproxy/errors/504.http
+    errorfile 400 /etc/haproxy/errors/400.http
+    errorfile 403 /etc/haproxy/errors/403.http
+    errorfile 408 /etc/haproxy/errors/408.http
+    errorfile 500 /etc/haproxy/errors/500.http
+    errorfile 502 /etc/haproxy/errors/502.http
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
 
 frontend ingress
    mode tcp
@@ -118,4 +118,64 @@ sudo systemctl enable haproxy
 sudo systemctl start haproxy
 sudo systemctl restart haproxy
 sudo systemctl status haproxy
+```
+
+### Install And Configure Cert-Manager
+https://cert-manager.io/docs/installation/helm/
+
+```bash
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.1/cert-manager.crds.yaml
+
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.13.1 \
+```
+
+### Install and Configure Longhorn
+
+[Longhorn](https://longhorn.io/)
+
+```bash
+helm repo add longhorn https://charts.longhorn.io
+helm repo update
+helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace
+kubectl get svc -n loghorn-system
+```
+
+#### Expose Longhorn
+```bash
+mkdir ingress
+cd ingress
+nano longhorn-ingress.yaml
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: longhorn-ingress
+  namespace: longhorn-system
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: longhorn.test.uz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: longhorn-frontend
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - longhorn.test.uz
+    secretName: longhorn-tls
 ```
