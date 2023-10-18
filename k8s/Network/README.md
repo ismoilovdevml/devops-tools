@@ -52,3 +52,70 @@ spec:
   ipAddressPools:
   - first-pool
 ```
+
+```bash
+kubectl apply -f address-pool.yml 
+```
+
+### NINX Ingress
+
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo update
+helm install ingress-nginx ingress-nginx/ingress-nginx --namespace ingress-nginx --create-namespace
+kubectl get svc -n ingress-nginx
+```
+
+### Install and Configure HAProxy
+
+```bash
+sudo apt update && sudoa apt upgrade
+sudo apt install haproxy
+sudo nano /etc/haproxy/haproxy.cfg 
+```
+
+```yaml
+defaults
+	log	global
+	mode	tcp
+#	option	httplog
+	option	dontlognull
+    timeout connect 5000
+    timeout client  50000
+    timeout server  50000
+	errorfile 400 /etc/haproxy/errors/400.http
+	errorfile 403 /etc/haproxy/errors/403.http
+	errorfile 408 /etc/haproxy/errors/408.http
+	errorfile 500 /etc/haproxy/errors/500.http
+	errorfile 502 /etc/haproxy/errors/502.http
+	errorfile 503 /etc/haproxy/errors/503.http
+	errorfile 504 /etc/haproxy/errors/504.http
+
+frontend ingress
+   mode tcp
+   bind :80
+   default_backend ingress_servers
+
+backend ingress_servers
+   mode tcp
+   server s1 10.128.0.200:80 check
+
+frontend ingress_tls
+   mode tcp
+   bind :443
+   default_backend ingress_servers_tls
+
+backend ingress_servers_tls
+   mode tcp
+   server s2 10.128.0.200:443 check
+```
+
+#### Apply this configration
+
+```bash
+haproxy -c -f haproxy.cfg
+sudo systemctl enable haproxy
+sudo systemctl start haproxy
+sudo systemctl restart haproxy
+sudo systemctl status haproxy
+```
