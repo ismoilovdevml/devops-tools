@@ -339,4 +339,4 @@ Add data sourece prometheus url
 
 ```bash
 http://prometheus-server.monitoring.svc.cluster.local/
-``
+```
