@@ -133,6 +133,36 @@ helm install \
   --namespace cert-manager \
   --create-namespace \
   --version v1.13.1 \
+
+kubectl get svc -n cert-manager
+```
+
+```bash
+mkdir certmanager
+cd certmanager
+nano clusterissuer.yaml
+```
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: teshmat@gmail.com  # ishlaydigan email yozing !!!
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: nginx
+```
+
+```bash
+kubectl apply -f clusterissuer.yaml
+kubectl get secret -n cert-manager
 ```
 
 ### Install and Configure Longhorn
@@ -179,3 +209,65 @@ spec:
     - longhorn.test.uz
     secretName: longhorn-tls
 ```
+
+```bash
+kubectl apply -f longhorn-ingress.yaml
+kubectl get ingress -n longhorn-system
+```
+
+### Install and Configure ArgoCD
+
+[ArgoCD](https://argo-cd.readthedocs.io/en/stable/)
+
+**Install**
+
+```bash
+helm repo add argo https://argoproj.github.io/argo-helm
+helm repo update
+helm install argocd argo/argo-cd --namespace argo-cd --create-namespace
+kubectl get svc -n argo-cd
+kubectl get pods -n argo-cd
+```
+
+**Configure**
+
+```bash
+sudo nano ingress/argo-cd-ingress.yaml
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: argocd-ingress
+  namespace: argo-cd
+  annotations:
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.org/ssl-services: "argocd-server"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: argocd.test.uz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: argocd-server
+            port:
+              number: 443
+  tls:
+  - hosts:
+    - argocd.test.uz
+    secretName: argocdserver-tls
+```
+
+```bash
+kubectl apply -f argo-cd-ingress.yaml
+kubectl get ingress -n argo-cd
+```
+
