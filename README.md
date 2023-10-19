@@ -18,3 +18,15 @@
 * [Remote Backup](https://github.com/ismoilovdevml/devops-tools/blob/master/Backup/PostgreSQL/remote-backup.sh)
 * [Backup all Databases](https://github.com/ismoilovdevml/devops-tools/blob/master/Backup/PostgreSQL/backups.sh)
 * [Create a clone from all databases](https://github.com/ismoilovdevml/devops-tools/blob/master/Backup/PostgreSQL/clone.py)
+## Docker
+### .NET 
+* [Dockerfile examples for .NET applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/.NET)
+### Java
+* [Dockerfile examples for Java applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/Java)
+### Javascript
+* [Dockerfile examples for Javascript[**AngularJS**] applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/Javascript/Angularjs)
+* [Dockerfile examples for Javascript[**NextJS**] applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/Javascript/Nextjs)
+* [Dockerfile examples for Javascript[**ReactJS**] applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/Javascript/Reactjs)
+### PHP
+* [Dockerfile examples for **Yii2** applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/PHP/Yii2)
+* [Dockerfile examples for **Laravel** applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Docker/PHP/laravel)

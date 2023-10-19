@@ -48,7 +48,7 @@ nano service-account.yaml
 ```
 `service-account.yaml`
 
-```bash
+```yaml
 apiVersion: v1
 kind: ServiceAccount
 metadata:
