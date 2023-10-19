@@ -258,3 +258,12 @@ spec:
     - jenkins.test.uz
     secretName: jenkins-tls
 ```
+
+**Visit jenkins.test.uz**
+
+### Get Token
+
+```bash
+kubectl get pods -n jenkins
+kubectl exec -it jenkins-559d8cd85c-cfcgk cat /var/jenkins_home/secrets/initialAdminPassword -n devops-tools
+```
