@@ -23,6 +23,8 @@ extraEnv: |
       value: admin
     - name: KEYCLOAK_PASSWORD
       value: fakenafona_admin
+    - name: JAVA_TOOL_OPTIONS
+      value: "-Dkeycloak.profile.feature.upload_scripts=enabled"
   # - name: KEYCLOAK_LOGLEVEL
   #   value: DEBUG
   # - name: WILDFLY_LOGLEVEL
