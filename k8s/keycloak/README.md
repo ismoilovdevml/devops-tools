@@ -6,8 +6,6 @@
 helm repo add codecentric https://codecentric.github.io/helm-charts
 helm repo update
 helm install keycloak codecentric/keycloak --version 15.0.2 --namespace keycloak --create-namespace
-
-helm upgrade keycloak codecentric/keycloak -f keycloak-remote.yaml --namespace keycloak
 ```
 
 ### Set admin login password
