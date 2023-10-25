@@ -19,24 +19,6 @@ kubectl get services -n istio-system
 kubectl get pods -n istio-system
 ```
 
-
-### Uninstall Istio
-
-
-```bash
-helm ls -n istio-system
-helm delete istio-ingress -n istio-ingress
-kubectl delete namespace istio-ingress
-helm uninstall istio-egress -n istio-system
-helm uninstall istio-ingress -n istio-system
-helm uninstall istiod -n istio-system
-helm uninstall istio-base -n istio-system
-kubectl delete namespace istio-system
-kubectl get crd -oname | grep --color=never 'istio.io' | xargs kubectl delete
-kubectl delete validatingwebhookconfiguration istiod-default-validator
-```
-
-
 ### Kiali UI
 
 ```bash
@@ -50,25 +32,23 @@ helm install \
   kiali-server
 ```
 
-### Uninstall Kiali
+### Prometheus/Istio Ingress Gateway/ Jaeger
 
 ```bash
-kubectl delete kiali --all --all-namespaces
-helm uninstall --namespace kiali-operator kiali-operator
-kubectl delete crd kialis.kiali.io
-kubectl patch kiali kiali -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
-helm uninstall --namespace istio-system kiali-server
+kubectl apply  -f https://raw.githubusercontent.com/istio/istio/release-1.19/samples/addons/prometheus.yaml --namespace istio-system
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.19/samples/addons/jaeger.yaml --namespace istio-system
+helm install istio-ingressgateway istio/gateway -n
+kubectl get pods -n istio-system
 ```
-### Prometheus
+
+### Inject namespace
 
 
 ```bash
-helm install prometheus istio/prometheus -n istio-system
-kubectl edit configmap kiali -n istio-system
-kubectl delete pod -l app=kiali -n istio-system
-kubectl get pods -n istio-system | grep prometheus
-
+kubectl label namespace jenkins istio-injection=enabled --overwrite
+kubectl get namespace -L istio-injection
 ```
+
 
 ### Expose Kiali UI with NGINX Ingress
 
@@ -83,7 +63,7 @@ metadata:
 spec:
   ingressClassName: "nginx"
   rules:
-  - host: kiali.xilol.uz
+  - host: kiali.test.uz
     http:
       paths:
       - path: /
@@ -95,7 +75,7 @@ spec:
               number: 20001
   tls:
   - hosts:
-    - kiali.xilol.uz
+    - kiali.test.uz
     secretName: kiali-tls
 ```
 
@@ -104,4 +84,30 @@ spec:
 ```bash
 kubectl get secret -n istio-system $(kubectl get sa kiali-service-account -n istio-system -o "jsonpath={.secrets[0].name}") -o jsonpath={.data.token} | base64 -d
 kubectl -n istio-system create token kiali-service-account
+```
+
+
+### Uninstall Kiali
+
+```bash
+kubectl delete kiali --all --all-namespaces
+helm uninstall --namespace kiali-operator kiali-operator
+kubectl delete crd kialis.kiali.io
+kubectl patch kiali kiali -n istio-system -p '{"metadata":{"finalizers": []}}' --type=merge
+helm uninstall --namespace istio-system kiali-server
+```
+
+### Uninstall Istio
+
+```bash
+helm ls -n istio-system
+helm delete istio-ingress -n istio-ingress
+kubectl delete namespace istio-ingress
+helm uninstall istio-egress -n istio-system
+helm uninstall istio-ingress -n istio-system
+helm uninstall istiod -n istio-system
+helm uninstall istio-base -n istio-system
+kubectl delete namespace istio-system
+kubectl get crd -oname | grep --color=never 'istio.io' | xargs kubectl delete
+kubectl delete validatingwebhookconfiguration istiod-default-validator
 ```
