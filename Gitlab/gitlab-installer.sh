@@ -24,65 +24,53 @@ if [ "$(id -u)" != "0" ]; then
    echo "This script must be run as root" 1>&2
    exit 1
 fi
-
-echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
-echo -e "${LIGHT_GREEN}"
-cat << "EOF"
-                                        .         
-        *((((                         ((((        
-       *(((((.                       ((((((       
-      .(((((((                      .(((((((      
-     .(((((((((                     (((((((((     
-     (((((((((((                   (((((((((((    
-    (((((((((((((((((((((((((((((((((((((((((((   
-   (((((((((((((((((((((((((((((((((((((((((((((  
-  //////(((((((((((((((((((((((((((((((((((////// 
-  //////////(((((((((((((((((((((((((((////////// 
-  /////////////(((((((((((((((((((((///////////// 
-   ///////////////((((((((((((((////////////////  
-    //////////////////(((((((/////////////////*   
-       //////////////////(//////////////////      
-          ////////////******////////////*         
-             ./////************//////             
-                 *****************                
-                    **********,                   
-                       ****   
-
-EOF
-echo -e "${NC}"
-echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
                    
-read -p "Enter the domain for your GitLab instance: " gitlab_domain
+echo "${GREEN}Enter the domain for your GitLab instance: ${YELLOW}"
+read gitlab_domain
 
-read -s -p "Enter the desired password for the GitLab root user: " root_password
-echo
+echo "${GREEN}Enter the desired password for the GitLab root user: ${YELLOW}"
+read root_password
 
 
-echo "Updating system packages..."
+echo -e "${LIGHT_GREEN}Updating system packages...${NC}"
+echo -e "${LIGHT_BLUE}"
 apt-get update -y
 apt-get upgrade -y
+echo -e "${NC}"
 
-echo "Installing necessary dependencies..."
+echo -e "${LIGHT_GREEN}Installing necessary dependencies...${NC}"
+echo -e "${LIGHT_BLUE}"
 apt-get install -y curl openssh-server ca-certificates tzdata perl
+echo -e "${NC}"
 
-echo "Installing Postfix..."
+echo -e "${LIGHT_GREEN}Installing Postfix...${NC}"
+echo -e "${LIGHT_BLUE}"
 DEBIAN_FRONTEND=noninteractive apt-get install -y postfix
+echo -e "${NC}"
 
-echo "Adding GitLab package repository..."
+echo -e "${LIGHT_GREEN}Adding GitLab package repository...${NC}"
+echo -e "${LIGHT_BLUE}"
 curl -sS https://packages.gitlab.com/install/repositories/gitlab/gitlab-ee/script.deb.sh | bash
+echo -e "${NC}"
 
 echo "Installing GitLab..."
+echo -e "${LIGHT_BLUE}"
 EXTERNAL_URL="http://${gitlab_domain}" apt-get install -y gitlab-ee
+echo -e "${NC}"
 
-echo "Configuring GitLab..."
+echo -e "${LIGHT_GREEN}Configuring GitLab...${NC}"
+echo -e "${LIGHT_BLUE}"
 gitlab-ctl reconfigure
+echo -e "${NC}"
 
-echo "Setting root password..."
+echo -e "${LIGHT_GREEN}Setting root password...${NC}"
+echo -e "${LIGHT_BLUE}"
 gitlab-rails runner "user = User.where(id: 1).first; user.password = '${root_password}'; user.password_confirmation = '${root_password}'; user.save!"
+echo -e "${NC}"
 
-echo "Configuring Nginx for GitLab..."
+echo -e "${LIGHT_GREEN}Configuring Nginx for GitLab..."
 if [ -f /etc/nginx/sites-available/gitlab ]; then
-    echo "Nginx configuration for GitLab already exists."
+    echo -e "${LIGHT_GREEN}Nginx configuration for GitLab already exists.${NC}"
 else
     cat > /etc/nginx/sites-available/gitlab <<EOF
 server {
@@ -104,9 +92,9 @@ EOF
     echo "Nginx configured successfully for GitLab."
 fi
 
-echo "GitLab Version:"
+echo -e "${LIGHT_GREEN}GitLab Version:${NC}"
 gitlab-rake gitlab:env:info | grep "GitLab version"
 
-echo "Installation and configuration complete."
-echo "You can access GitLab at http://${gitlab_domain}"
-echo "Login with the username 'root' and the password you set."
+echo -e "${LIGHT_GREEN}Installation and configuration complete.${NC}"
+echo -e "${LIGHT_GREEN}You can access GitLab at http://${gitlab_domain}${NC}"
+echo -e "${LIGHT_GREEN}Login with the username 'root' and the password you set.${NC}"
