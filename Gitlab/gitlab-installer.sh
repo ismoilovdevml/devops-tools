@@ -51,13 +51,12 @@ read root_password
 
 echo -e "${LIGHT_GREEN}Updating system packages...${NC}"
 echo -e "${LIGHT_BLUE}"
-apt-get update -y
-apt-get upgrade -y
+apt-get update && apt-get upgrade
 echo -e "${NC}"
 
 echo -e "${LIGHT_GREEN}Installing necessary dependencies...${NC}"
 echo -e "${LIGHT_BLUE}"
-apt-get install -y curl openssh-server ca-certificates tzdata perl
+apt-get install -y curl openssh-server ca-certificates tzdata perl git htop zip unzip 
 echo -e "${NC}"
 
 echo -e "${LIGHT_GREEN}Installing Postfix...${NC}"
