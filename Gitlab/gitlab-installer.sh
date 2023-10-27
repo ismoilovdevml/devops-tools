@@ -24,13 +24,13 @@ $$ |  $$ |$$ |  $$ |$$\ $$ |$$  __$$ |$$ |  $$ |        $$ |  $$ |  $$ | \____$$
 EOF
 echo -e "${NC}"
 
-echo "${GREEN}Enter the domain for your GitLab instance: ${YELLOW}"
+echo -e "${GREEN}Enter the domain for your GitLab instance: ${YELLOW}"
 read domain
 
-echo "${GREEN}Enter the server IP address for proxy configuration: ${YELLOW}"
+echo -e "${GREEN}Enter the server IP address for proxy configuration: ${YELLOW}"
 read server_ip
 
-echo "${GREEN}Enter the desired password for the GitLab root user: ${YELLOW}"
+echo -e "${GREEN}Enter the desired password for the GitLab root user: ${YELLOW}"
 read root_password
 
 
