@@ -54,7 +54,7 @@ spec:
 ```
 
 ```bash
-kubectl apply -f address-pool.yml 
+kubectl apply -f address-pool.yaml 
 ```
 
 ### NGINX Ingress
@@ -69,7 +69,7 @@ kubectl get svc -n ingress-nginx
 ### Install and Configure HAProxy
 
 ```bash
-sudo apt update && sudoa apt upgrade
+sudo apt update && sudo apt upgrade
 sudo apt install haproxy
 sudo nano /etc/haproxy/haproxy.cfg 
 ```
