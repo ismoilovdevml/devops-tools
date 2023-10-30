@@ -46,3 +46,19 @@
 * [HAProxy configuration for local kubernetes cluster](https://github.com/ismoilovdevml/devops-tools/blob/master/HAProxy/k8s/local.cfg)
 ## Jenkins
 * [Jenkins pipeline for docker container adapted to Github](https://github.com/ismoilovdevml/devops-tools/blob/master/Jenkins/pipelines/Jenkinsfile)
+## Nginx
+* [Nginx configuration for applications running in Docker containers](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/docker.conf)
+* Nginx configuration [backend](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/ismoilovdev.bk.conf) and [frontend](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/ismoilovdev.uz.conf) for CORS
+
+## Terraform
+* [Terraform script to create vm instance in GCP(Google Cloud Platform)](https://github.com/ismoilovdevml/devops-tools/blob/master/Terraform/GCP/create-vm.tf)
+## Docker Stats
+* [Docker Container is a web application that shows real-time how much RAM, network and additional information](https://github.com/ismoilovdevml/devops-tools/tree/master/docker-stats)
+## Info
+* [A program that collects data through the domain of sites and searches for site vulnerabilities](https://github.com/ismoilovdevml/devops-tools/tree/master/info)
+## Jenkins Status
+* [Web application for monitoring Jenkins](https://github.com/ismoilovdevml/devops-tools/tree/master/jenkins-status)
+## Kubernetes(K8s)
+* [Kubernetes installer script for k8s-master and worker nodes](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Install)
+* [After installing Kubernetes, **Network** configuration and additional basic configurations](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Network)
+* [Kubernetes dashboard installation and exposure through nginx ingress](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Dashboard)

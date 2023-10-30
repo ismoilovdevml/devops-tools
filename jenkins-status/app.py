@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
-jenkins_url = 'http://192.168.1.170:8080'  # Replace with your Jenkins URL
+jenkins_url = 'http://0.0.0.0:8080'  # Replace with your Jenkins URL
 
 @app.route('/')
 def home():
