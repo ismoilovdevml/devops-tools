@@ -39,3 +39,10 @@
 * [Github actions CI/CDs for GKE(Google Kubernetes(k8s) Engine)](https://github.com/ismoilovdevml/devops-tools/tree/master/Github-Action/GKE)
 * [CI for Javascript applications](https://github.com/ismoilovdevml/devops-tools/tree/master/Github-Action/Javascript)
 * [CI/CD for Kubernetes(k8s)](https://github.com/ismoilovdevml/devops-tools/tree/master/Github-Action/k8s)
+## Gitlab
+* [Gitlab installer script + Nginx configration](https://github.com/ismoilovdevml/devops-tools/tree/master/Gitlab)
+## HAProxy
+* [HAProxy configuration TCP mode for remote k8s cluster](https://github.com/ismoilovdevml/devops-tools/blob/master/HAProxy/k8s/haproxy.cfg)
+* [HAProxy configuration for local kubernetes cluster](https://github.com/ismoilovdevml/devops-tools/blob/master/HAProxy/k8s/local.cfg)
+## Jenkins
+* [Jenkins pipeline for docker container adapted to Github](https://github.com/ismoilovdevml/devops-tools/blob/master/Jenkins/pipelines/Jenkinsfile)
