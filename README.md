@@ -59,6 +59,7 @@
 ## Jenkins Status
 * [Web application for monitoring Jenkins](https://github.com/ismoilovdevml/devops-tools/tree/master/jenkins-status)
 ## Kubernetes(K8s)
-* [Kubernetes installer script for k8s-master and worker nodes](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Install)
+* [Kubernetes installer script for **k8s-master** and **worker nodes**](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Install)
 * [After installing Kubernetes, **Network** configuration and additional basic configurations](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Network)
-* [Kubernetes dashboard installation and exposure through nginx ingress](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Dashboard)
+* [**Kubernetes Dashboard** installation and exposure through nginx ingress](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Dashboard)
+* [Installing and configuring Jenkins on a Kubernetes cluster](https://github.com/ismoilovdevml/devops-tools/tree/master/k8s/Jenkins)
