@@ -12,6 +12,42 @@ nano service-account.yaml
 **service-account.yaml**
 
 ```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: admin-user
+  namespace: kubernetes-dashboard
+```
+
+```bash
+nano clusterrolebinding.yaml
+```
+`clusterrolebinding.yaml`
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: admin-user
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: admin-user
+  namespace: kubernetes-dashboard
+```
+
+### Expose K8s dashboard with NGINX Ingress 
+
+```bash
+nano dashboard-ingress.yaml
+```
+
+`dashboard-ingress.yaml`
+
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -39,42 +75,6 @@ spec:
   - hosts:
     - dashboard.test.uz
     secretName: k8s-dashboard-tls
-```
-
-### Get Sign-in Token
-
-```bash
-nano service-account.yaml
-```
-`service-account.yaml`
-
-```yaml
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: admin-user
-  namespace: kubernetes-dashboard
-```
-
-```bash
-nano clusterrolebinding.yaml
-```
-
-`clusterrolebinding.yaml`
-
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: admin-user
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
 ```
 
 #### Apply this configrations

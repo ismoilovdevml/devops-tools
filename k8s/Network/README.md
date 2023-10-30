@@ -174,7 +174,7 @@ kubectl get secret -n cert-manager
 helm repo add longhorn https://charts.longhorn.io
 helm repo update
 helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace
-kubectl get svc -n loghorn-system
+kubectl get svc -n longhorn-system
 ```
 
 #### Expose Longhorn
