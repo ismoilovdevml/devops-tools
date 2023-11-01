@@ -272,6 +272,12 @@ kubectl apply -f argo-cd-ingress.yaml
 kubectl get ingress -n argo-cd
 ```
 
+### Argocd get login password
+
+```bash
+kubectl -n argo-cd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
 ### Install and Configure Grafana Prometheus
 
 **Install Prometheus**
