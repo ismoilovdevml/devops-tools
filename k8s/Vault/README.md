@@ -6,6 +6,7 @@
 helm repo add hashicorp https://helm.releases.hashicorp.com
 helm search repo hashicorp/vault
 helm install vault hashicorp/vault --namespace vault --create-namespace
+kubectl get all --namespace vault
 ```
 
 ### Initial
@@ -62,4 +63,11 @@ kubectl config view --raw -o jsonpath='{.clusters[0].cluster.certificate-authori
 kubectl exec --namespace='vault' vault-0 -- vault write auth/kubernetes/config \
   kubernetes_host="$KUBERNETES_HOST" \
   kubernetes_ca_cert=@/path/to/ca.crt
+```
+
+### PostgreSQL
+
+```bash
+kubectl get configmap vault-config -n vault -o yaml > vault.yaml
+helm upgrade vault hashicorp/vault -f vault.yaml --namespace vault
 ```

@@ -1,0 +1,49 @@
+apiVersion: v1
+data:
+  extraconfig-from-values.hcl: |-
+    disable_mlock = true
+    ui = true
+
+    listener "tcp" {
+      tls_disable = 1
+      address = "[::]:8200"
+      cluster_address = "[::]:8201"
+      # Enable unauthenticated metrics access (necessary for Prometheus Operator)
+      #telemetry {
+      #  unauthenticated_metrics_access = "true"
+      #}
+    }
+    storage "postgresql" {
+      connection_url = "postgres://postgres:my-password@127.0.0.1:5432/vault?sslmode=verify-full"
+    }
+
+    # Example configuration for using auto-unseal, using Google Cloud KMS. The
+    # GKMS keys must already exist, and the cluster must have a service account
+    # that is authorized to access GCP KMS.
+    #seal "gcpckms" {
+    #   project     = "vault-helm-dev"
+    #   region      = "global"
+    #   key_ring    = "vault-helm-unseal-kr"
+    #   crypto_key  = "vault-helm-unseal-key"
+    #}
+
+    # Example configuration for enabling Prometheus metrics in your config.
+    #telemetry {
+    #  prometheus_retention_time = "30s"
+    #  disable_hostname = true
+    #}
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: vault
+    meta.helm.sh/release-namespace: vault
+  creationTimestamp: "2023-11-01T10:59:48Z"
+  labels:
+    app.kubernetes.io/instance: vault
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: vault
+    helm.sh/chart: vault-0.26.1
+  name: vault-config
+  namespace: vault
+  resourceVersion: "230023"
+  uid: 70201621-da9f-474a-9e12-e8ae645af4df
