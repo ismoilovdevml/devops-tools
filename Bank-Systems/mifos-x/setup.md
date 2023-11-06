@@ -2,7 +2,6 @@
 
 ```bash
 sudo apt-get update && sudo apt-get upgrade -y
-git clone https://github.com/apache/fineract.git
 sudo apt install openjdk-17-jdk openjdk-17-jre
 ```
 
@@ -64,3 +63,48 @@ sudo systemctl restart tomcat
 ```
 
 [Stackowerflow link](https://stackoverflow.com/questions/36703856/access-tomcat-manager-app-from-different-host)
+
+### Download drizzle jdbc connector and mysql jdbc connector
+
+```bash
+cd /opt/tomcat/apache-tomcat-9.0.82/lib
+wget https://github.com/ismoilovdevml/devops-tools/blob/master/Bank-Systems/mifos-x/drizzle-jdbc-1.4.jar
+wget https://github.com/ismoilovdevml/devops-tools/blob/master/Bank-Systems/mifos-x/mysql-connector-j-8.2.0.jar
+```
+## Enable SSL
+
+```bash
+sudo keytool -genkey -keyalg RSA -alias tomcat -keystore /usr/share/tomcat.keystore
+```
+
+### Setup datbases
+
+```bash
+mysql -u root -p
+create database `mifosplatform-tenants`;
+create database `mifostenant-default`;
+```
+
+### Setup fineract
+
+```bash
+git clone https://github.com/apache/fineract.git
+cd fineract
+./gradlew createDB -PdbName=fineract_tenants
+./gradlew createDB -PdbName=fineract_default
+```
+
+### Activate Mifos
+
+```bash
+cd fineract
+./gradlew :fineract-war:clean :fineract-war:war
+cd fineract/fineract-provider
+wget --no-check-certificate -P gradle/wrapper https://github.com/apache/fineract/raw/develop/gradle/wrapper/gradle-wrapper.jar
+cd fineract/fineract-war/build/libs
+sudo cp -r fineract-provider.war /opt/tomcat/apache-tomcat-9.0.82/webapps/
+sudo cp -r community-app/ /opt/tomcat/apache-tomcat-9.0.82/webapps/
+
+sudo mkdir -p /opt/fineract
+cd /opt/fineract/
+```
