@@ -108,3 +108,13 @@ sudo cp -r community-app/ /opt/tomcat/apache-tomcat-9.0.82/webapps/
 sudo mkdir -p /opt/fineract
 cd /opt/fineract/
 ```
+
+### ActiveMQ
+
+
+[Install Apache ActiveMQ on Ubuntu 20.04](https://www.vultr.com/docs/install-apache-activemq-on-ubuntu-20-04/)
+
+```bash
+cd /opt
+wget https://archive.apache.org/dist/activemq/5.15.0/apache-activemq-5.15.0-bin.tar.gz
+```
