@@ -13,7 +13,7 @@ sudo apt-get update
 sudo apt install mysql-server
 sudo mysql_secure_installation
 sudo mysql
-ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'mysql';
+ALTER USER 'root'@'34.136.231.76' IDENTIFIED WITH mysql_native_password BY 'mysql';
 FLUSH PRIVILEGES;
 exit
 mysql -u root -p
@@ -62,3 +62,7 @@ cd fineract
 ./gradlew createDB -PdbName=fineract_default
 ./gradlew bootRun
 ```
+
+https://34.136.231.76:8443/fineract-provider/
+https://34.136.231.76:8443/fineract-provider/actuator/health
+http://34.136.231.76:9090/?baseApiUrl=https://34.136.231.76:8443/fineract-provider&tenantIdentifier=default
