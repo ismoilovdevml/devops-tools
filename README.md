@@ -46,6 +46,8 @@
 * [HAProxy configuration for local kubernetes cluster](https://github.com/ismoilovdevml/devops-tools/blob/master/HAProxy/k8s/local.cfg)
 ## Jenkins
 * [Jenkins pipeline for docker container adapted to Github](https://github.com/ismoilovdevml/devops-tools/blob/master/Jenkins/pipelines/Jenkinsfile)
+* [Advanced Jenkins CI/CD pipeline **Development**, **Stage** and **Production**](https://github.com/ismoilovdevml/devops-tools/blob/master/Jenkins/pipelines/advanced.Jenkinsfile)
+
 ## Nginx
 * [Nginx configuration for applications running in Docker containers](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/docker.conf)
 * Nginx configuration [backend](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/ismoilovdev.bk.conf) and [frontend](https://github.com/ismoilovdevml/devops-tools/blob/master/Nginx/ismoilovdev.uz.conf) for CORS
