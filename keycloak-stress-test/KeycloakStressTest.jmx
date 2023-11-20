@@ -24,7 +24,7 @@
       </ThreadGroup>
       <hashTree>
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
-          <stringProp name="HTTPSampler.domain">192.168.1.205</stringProp>
+          <stringProp name="HTTPSampler.domain">0.0.0.0</stringProp> 
           <stringProp name="HTTPSampler.port">8080</stringProp>
           <stringProp name="HTTPSampler.protocol">http</stringProp>
           <stringProp name="HTTPSampler.path">/auth/realms/Test/protocol/openid-connect/token</stringProp>
