@@ -1,6 +1,6 @@
-##  Create a Linux VM cluster in Azure using Terraform
+## Create an Azure resource group using Terraform
 
-###  Initialize Terraform
+### Initialize Terraform
 
 ```bash
 terraform init -upgrade
@@ -10,20 +10,18 @@ terraform init -upgrade
 ```bash
 terraform plan -out main.tfplan
 ```
+
 ### Apply a Terraform execution plan
 
 ```bash
 terraform apply main.tfplan
 ```
 
-### Verify the results (Azure CLI)
+### Verify the results(Azure CLI)
 
 ```bash
 resource_group_name=$(terraform output -raw resource_group_name)
-
-az vm list \
-  --resource-group $resource_group_name \
-  --query "[].{\"VM Name\":name}" -o table
+az group show --name $resource_group_name
 ```
 
 ### Clean up resources
