@@ -95,49 +95,16 @@ if [ -f /etc/nginx/sites-available/${domain} ]; then
 else
     cat > /etc/nginx/sites-available/${domain} <<EOF
 server {
-    server_name ${domain};
-    access_log /var/log/gitlab/gitlab_access.log;
-    error_log /var/log/gitlab/gitlab_error.log warn;
-
-    # Redirect HTTP to HTTPS
-    return 301 https://\$host\$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name ${domain};
-
-    ssl_certificate /etc/ssl/certs/ssl-cert-snakeoil.pem;
-    ssl_certificate_key /etc/ssl/private/ssl-cert-snakeoil.key;
-
-    location / {
-        add_header       X-Served-By $host;
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-Scheme $scheme;
-        proxy_set_header X-Forwarded-Proto  $scheme;
-        proxy_set_header X-Forwarded-For    $remote_addr;
-        proxy_set_header X-Real-IP          $remote_addr;
-        proxy_pass http://${server_ip};
-    }
-
-    listen [::]:443 ssl ipv6only=on; # managed by Certbot
-    listen 443 ssl; # managed by Certbot
-    access_log /var/log/nginx/${domain}_access_log;
-    error_log /var/log/nginx/${domain}_error_log;
-}
-
-server {
-    if ($host = ${domain}) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
     listen 80;
-    listen [::]:80;
     server_name ${domain};
-    return 404; # managed by Certbot
-
-
+ 
+    location / {
+        proxy_pass http://${server_ip};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }
 EOF
 

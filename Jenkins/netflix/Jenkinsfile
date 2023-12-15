@@ -8,9 +8,9 @@ pipeline {
         GIT_URL = 'https://github.com/ismoilovdevml/netflix.git'
         GITHUB_TOKEN = credentials('github-token')
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        SERVER_USERNAME = 'username'
-        SERVER_IP = '0.0.0.0'
-        API_KEY = 'tokenjqPP'
+        SERVER_USERNAME = credentials('server-username')
+        SERVER_IP = credentials('server-ip')
+        API_KEY = credentials('tmdb-api-key')
         CONTAINER_NAME = 'netflix'
         BRANCH_NAME = 'main'
         SCANNER_HOME = tool 'sonar-scanner'
@@ -45,6 +45,12 @@ pipeline {
         stage('Installing Dependencies') {
             steps {
                 sh "npm install"
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+              dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+              dependencyCheckPublisher pattern: '**/dependency-check-report.xml'  
             }
         }
         stage('TRIVY FS SCAN') {
