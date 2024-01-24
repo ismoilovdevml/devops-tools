@@ -1,0 +1,51 @@
+name: Docker CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  CONTAINER_NAME: devops-journey-uz
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  SSH_HOST: ${{ secrets.SERVER_IP }}
+  SSH_USER: ${{ secrets.SERVER_USERNAME }}
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  GITHUB_TOKEN: ${{ secrets.PERSONAL_TOKEN }}
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        run: echo "${GITHUB_TOKEN}" | docker login -u "${{ github.actor }}" --password-stdin "${{ env.REGISTRY }}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"
+  
+  deploy:
+    needs: build_and_push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Executing remote SSH commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: "${{ env.SSH_HOST }}"
+          username: "${{ env.SSH_USER }}"
+          key: "${{ env.SSH_KEY }}"
+          script: |
+            echo "${GITHUB_TOKEN}" | docker login -u "${{ github.actor }}" --password-stdin "${{ env.REGISTRY }}"
+            docker pull "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"  
+            docker stop "${{ env.CONTAINER_NAME }}" || true
+            docker rm "${{ env.CONTAINER_NAME }}" || true
+            docker run -d --name "${{ env.CONTAINER_NAME }}" -p 3000:3000 "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest"  
