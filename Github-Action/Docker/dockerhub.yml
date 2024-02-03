@@ -7,7 +7,7 @@ on:
     branches: [ main ]
  
 env:
-  CONTAINER_NAME: devops-journey # docker bu repositoriya nomi yoki registry repozitoriya nomi
+  CONTAINER_NAME: devops-journey
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
   SSH_HOST: ${{ secrets.SERVER_IP }}

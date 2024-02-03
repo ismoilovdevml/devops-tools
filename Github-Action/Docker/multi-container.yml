@@ -1,0 +1,72 @@
+name: Github Actions CI/CD
+ 
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+ 
+env:
+  API_CONTAINER_NAME: dotnet-api
+  UI_CONTAINER_NAME: dotnet-ui
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+  DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+  SSH_HOST: ${{ secrets.SERVER_IP }}
+  SSH_USER: ${{ secrets.SERVER_USERNAME }}
+  SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+  UI_PORT: 4000:4000
+  API_PORT: 4001:4001
+ 
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+ 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+ 
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
+      
+      - name: Build and push API Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./API.Dockerfile
+          push: true
+          tags: ${{ env.DOCKERHUB_USERNAME }}/${{ env.API_CONTAINER_NAME }}:${{ github.sha }}
+      - name: Build and push UI Docker image
+        uses: docker/build-push-action@v5
+        with:
+            context: .
+            file: ./UI.Dockerfile
+            push: true
+            tags: ${{ env.DOCKERHUB_USERNAME }}/${{ env.UI_CONTAINER_NAME }}:${{ github.sha }}
+ 
+  deploy:
+    needs: build_and_push
+    runs-on: ubuntu-latest
+ 
+    steps:
+      - name: Executing remote SSH commands to deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ env.SSH_KEY }}
+          script: |
+            docker login -u ${{ env.DOCKERHUB_USERNAME }} -p ${{ env.DOCKERHUB_TOKEN }}
+            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.API_CONTAINER_NAME }}:${{ github.sha }}
+            docker pull ${{ env.DOCKERHUB_USERNAME }}/${{ env.UI_CONTAINER_NAME }}:${{ github.sha }}
+            docker stop ${{ env.API_CONTAINER_NAME }} || true
+            docker stop ${{ env.UI_CONTAINER_NAME }} || true
+            docker rm ${{ env.API_CONTAINER_NAME }} || true
+            docker rm ${{ env.UI_CONTAINER_NAME }} || true
+            docker run -d --name ${{ env.API_CONTAINER_NAME }} -p ${{ env.API_PORT }} ${{ env.DOCKERHUB_USERNAME }}/${{ env.API_CONTAINER_NAME }}:${{ github.sha }}
+            docker run -d --name ${{ env.UI_CONTAINER_NAME }} -p ${{ env.UI_PORT }} ${{ env.DOCKERHUB_USERNAME }}/${{ env.UI_CONTAINER_NAME }}:${{ github.sha }}
