@@ -1,21 +1,17 @@
 pipeline {
     agent any
-    tools {
-        jdk 'jdk17'
-        nodejs 'node16'
-    }
+ 
     environment {
-        GIT_URL = 'https://github.com/ismoilovdevml/netflix.git'
-        GITHUB_TOKEN = credentials('github-token')
+        DISCORD_WEBHOOK = credentials('discord-webhook')
+        GIT_URL = 'https://github.com/ismoilovdevml/devops-journey.git'
         DOCKERHUB_CREDENTIALS = credentials('dockerhub')
-        CONTAINER_NAME = 'netflix'
+        CONTAINER_NAME = 'devops-journey'
         REGISTRY_URL = 'devsecopsuser732'
-        API_KEY = credentials('tmdb-api-key')
+        GIT_TOKEN = credentials('git-token')
         SERVER_USERNAME = credentials('server-username')
         SERVER_IP = credentials('server-ip')
-        PORT = 80:8081
+        SSH_CREDENTIALS = credentials('server-ssh')
         BRANCH_NAME = 'main'
-        SCANNER_HOME = tool 'sonar-scanner'
     }
     stages {
         stage('Clean Workspace') {
@@ -25,38 +21,7 @@ pipeline {
         }
         stage('Clone Repository') {
             steps {
-                git branch: BRANCH_NAME, url: GIT_URL, credentialsId: 'github-token'  
-            }
-        }
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('sonar-server') {
-                    sh """$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
-                        -Dsonar.projectKey=Netflix"""
-                }
-            }
-        }
-        stage('Quality Gate') {
-            steps {
-                script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token'
-                }
-            }
-        }
-        stage('Installing Dependencies') {
-            steps {
-                sh "npm install"
-            }
-        }
-        stage('OWASP FS SCAN') {
-            steps {
-              dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
-              dependencyCheckPublisher pattern: '**/dependency-check-report.xml'  
-            }
-        }
-        stage('TRIVY FS SCAN') {
-            steps {
-                sh "trivy fs . > trivyfs.txt"
+                git branch: BRANCH_NAME, url: GIT_URL, credentialsId: 'git-token'
             }
         }
         stage('Build Application') {
@@ -66,7 +31,7 @@ pipeline {
                         def dockerlogin = "docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}"
                         sh dockerlogin
                         sh """
-                            docker build --build-arg TMDB_V3_API_KEY=${API_KEY} . -t ${REGISTRY_URL}/${CONTAINER_NAME}:${BUILD_NUMBER} -f Dockerfile
+                            docker build . -t ${REGISTRY_URL}/${CONTAINER_NAME}:${BUILD_NUMBER} -f Dockerfile
                             docker tag ${REGISTRY_URL}/${CONTAINER_NAME}:${BUILD_NUMBER} ${REGISTRY_URL}/${CONTAINER_NAME}:latest
                             docker push ${REGISTRY_URL}/${CONTAINER_NAME}:latest
                             docker push ${REGISTRY_URL}/${CONTAINER_NAME}:${BUILD_NUMBER}
@@ -88,23 +53,23 @@ pipeline {
                                 docker pull ${REGISTRY_URL}/${CONTAINER_NAME}:latest && \
                                 docker stop ${CONTAINER_NAME} || true && \
                                 docker rm ${CONTAINER_NAME} || true && \
-                                docker run -d -p ${PORT}--name ${CONTAINER_NAME} --restart always ${REGISTRY_URL}/${CONTAINER_NAME}:latest '
+                                docker run -d -p 3000:3000 --name ${CONTAINER_NAME} --restart always ${REGISTRY_URL}/${CONTAINER_NAME}:latest '
                             """
                         }
                     }
-                }  
+                }    
             }
         }
     }
     post {
         always {
-            emailext attachLog: true,
-                subject: "'${currentBuild.result}'",
-                body: "Project: ${env.JOB_NAME}<br/>" +
-                    "Build Number: ${env.BUILD_NUMBER}<br/>" +
-                    "URL: ${env.BUILD_URL}<br/>",
-                to: 'iotabek101@gmail.com',
-                attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+            discordSend(
+                description: "Jenkins Pipeline Build ${currentBuild.currentResult}",
+                link: env.GIT_URL,
+                result: currentBuild.currentResult,
+                title: JOB_NAME,
+                webhookURL: env.DISCORD_WEBHOOK
+            )
         }
     }
 }
