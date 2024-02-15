@@ -1,11 +1,13 @@
-FROM node:16 AS build   
+FROM node:20 as build
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm install
+RUN npm install --force
 COPY . .
+RUN npm run build
 
-ENV PORT 3000
-EXPOSE 3000
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
 
-CMD ["npm", "start"]
+## port 8080:80
