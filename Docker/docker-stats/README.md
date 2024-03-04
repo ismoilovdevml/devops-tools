@@ -4,17 +4,19 @@ A web application that displays the status of Docker Containers in real-time.
 
 Launch the program
 
-> Required: Nodejs and npm
+> Required: Nodejs,npm and pm2
 > sudo apt install nodejs npm
 
 ```bash
 git clone https://github.com/ismoilovdevml/devops-tools.git
 
-cd devops-tools/docker-stats
+cd devops-tools/Docker/docker-stats
 
 npm install
 
-#run the program
+npm install pm2 -g
 
-node server.js
+pm2 start ecosystem.config.js
+
+pm2 ls
 ```
