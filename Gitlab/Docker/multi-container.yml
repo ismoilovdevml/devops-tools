@@ -1,0 +1,54 @@
+stages:
+  - build_and_push
+  - deploy
+
+variables:
+  API_IMAGE_NAME: github-api
+  API_CONTAINER_NAME: github-api
+  UI_IMAGE_NAME: github-ui
+  UI_CONTAINER_NAME: github-ui
+  UI_PORT: "4000:4000"
+  API_PORT: "4001:4001"
+  REPO_NAME: $CI_PROJECT_PATH
+  REGISTRY: "registry.gitlab.com"
+  SSH_HOST: $SERVER_IP
+  SSH_USER: $SERVER_USERNAME
+  SSH_KEY: $SSH_PRIVATE_KEY
+
+build_and_push:
+  stage: build_and_push
+  image: docker:stable
+
+  services:
+    - docker:dind
+
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+
+  script:
+    - docker build -t $REGISTRY/$REPO_NAME/$API_IMAGE_NAME:$CI_COMMIT_SHA -f ./API.Dockerfile .
+    - docker push $REGISTRY/$REPO_NAME/$API_IMAGE_NAME:$CI_COMMIT_SHA
+    - docker build -t $REGISTRY/$REPO_NAME/$UI_IMAGE_NAME:$CI_COMMIT_SHA -f ./UI.Dockerfile .
+    - docker push $REGISTRY/$REPO_NAME/$UI_IMAGE_NAME:$CI_COMMIT_SHA
+    
+deploy:
+  stage: deploy
+  image: alpine:latest
+
+  before_script:
+    - apk add --update --no-cache openssh-client
+
+  script:
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan -H $SSH_HOST >> ~/.ssh/known_hosts 
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "echo "$CI_JOB_TOKEN" | docker login -u gitlab-ci-token --password-stdin $CI_REGISTRY"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker pull $REGISTRY/$REPO_NAME/$API_IMAGE_NAME:$CI_COMMIT_SHA"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker pull $REGISTRY/$REPO_NAME/$UI_IMAGE_NAME:$CI_COMMIT_SHA"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker stop $UI_CONTAINER_NAME || true"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker stop $API_CONTAINER_NAME || true"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker rm $UI_CONTAINER_NAME || true"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker rm $API_CONTAINER_NAME || true"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker run -d --name $API_CONTAINER_NAME -p $API_PORT $REGISTRY/$REPO_NAME/$API_IMAGE_NAME:$CI_COMMIT_SHA"
+    - ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $SSH_USER@$SSH_HOST "docker run -d --name $UI_CONTAINER_NAME -p $UI_PORT $REGISTRY/$REPO_NAME/$UI_IMAGE_NAME:$CI_COMMIT_SHA"
