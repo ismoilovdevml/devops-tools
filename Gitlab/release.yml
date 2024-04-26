@@ -1,0 +1,42 @@
+stages:
+  - build
+  - release
+
+variables:
+  NODE_VERSION: "20.x"
+
+cache:
+  key: "$CI_COMMIT_REF_SLUG"
+  paths:
+    - node_modules/
+
+before_script:
+  - |
+    if [[ "$CI_JOB_NAME" != *"release_job"* ]]; then
+      apt-get update -qy
+      apt-get install -y curl
+      curl -sL https://deb.nodesource.com/setup_20.x | bash -
+      apt-get install -y nodejs
+      npm install -g pnpm
+    fi
+
+build:
+  stage: build
+  image: node:20
+  script:
+    - pnpm install
+    - pnpm next build
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+release_job:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  script:
+    - echo "Running release_job for $TAG"
+  release:
+    tag_name: "v0.$CI_PIPELINE_IID"
+    description: "v0.$CI_PIPELINE_IID"
+    ref: "$CI_COMMIT_SHA"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
