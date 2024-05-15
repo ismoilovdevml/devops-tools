@@ -68,5 +68,5 @@ jobs:
             docker stop ${{ env.UI_CONTAINER_NAME }} || true
             docker rm ${{ env.API_CONTAINER_NAME }} || true
             docker rm ${{ env.UI_CONTAINER_NAME }} || true
-            docker run -d --name ${{ env.API_CONTAINER_NAME }} -p ${{ env.API_PORT }} ${{ env.DOCKERHUB_USERNAME }}/${{ env.API_CONTAINER_NAME }}:${{ github.sha }}
-            docker run -d --name ${{ env.UI_CONTAINER_NAME }} -p ${{ env.UI_PORT }} ${{ env.DOCKERHUB_USERNAME }}/${{ env.UI_CONTAINER_NAME }}:${{ github.sha }}
+            docker run -d --name ${{ env.API_CONTAINER_NAME }} -p ${{ env.API_PORT }} --restart always ${{ env.DOCKERHUB_USERNAME }}/${{ env.API_CONTAINER_NAME }}:${{ github.sha }}
+            docker run -d --name ${{ env.UI_CONTAINER_NAME }} -p ${{ env.UI_PORT }} --restart always ${{ env.DOCKERHUB_USERNAME }}/${{ env.UI_CONTAINER_NAME }}:${{ github.sha }}

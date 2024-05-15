@@ -62,4 +62,4 @@ jobs:
             docker pull "${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ github.sha }}"
             docker stop "${{ env.CONTAINER_NAME }}" || true
             docker rm "${{ env.CONTAINER_NAME }}" || true
-            docker run -d --name "${{ env.CONTAINER_NAME }}" -p "${{ env.PORT }}" "${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ github.sha }}"
+            docker run -d --name "${{ env.CONTAINER_NAME }}" -p "${{ env.PORT }}" --restart always "${{ env.REGISTRY }}/${{ env.REPO_NAME }}:${{ github.sha }}"
