@@ -1,0 +1,46 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  instance_addr: 0.0.0.0
+  path_prefix: /tmp/loki
+  ring:
+    kvstore:
+      store: inmemory
+  replication_factor: 1  # Set replication factor to 1 for a single instance
+
+storage_config:
+  boltdb_shipper:
+    active_index_directory: /loki/index
+    cache_location: /loki/index_cache
+    resync_interval: 5s
+  aws:
+    s3: http://minio-admin:minio-password@0.0.0.0:9000/logs
+    s3forcepathstyle: true
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      store: tsdb
+      object_store: s3
+      schema: v13
+      index:
+	prefix: index_
+        period: 24h
+
+ruler:
+  alertmanager_url: http://localhost:9093
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        enabled: true
+        max_size_mb: 100
+
+limits_config:
+  reject_old_samples: false
+  reject_old_samples_max_age: 720h  # Accept logs up to 30 days old
