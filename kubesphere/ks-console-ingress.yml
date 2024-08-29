@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kubesphere-dashboard-ingress
+  namespace: kubesphere-system
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: "nginx"
+  rules:
+  - host: dashboard.helm.uz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: ks-console
+            port:
+              number: 80
+  tls:
+  - hosts:
+    - dashboard.helm.uz
+    secretName: ks-console-tls
