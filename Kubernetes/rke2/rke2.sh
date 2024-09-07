@@ -45,7 +45,7 @@ echo -e "${YELLOW}--------------------------------------------------------------
 KVVERSION="v0.8.2"
 
 # Set the IP addresses of the admin, masters, and workers nodes
-admin=192.168.3.5
+admin=10.128.0.25
 master1=10.128.0.22
 master2=10.128.0.23
 master3=10.162.0.2
@@ -60,7 +60,7 @@ user=ubuntu
 interface=ens4
 
 # Set the virtual IP address (VIP)
-vip=10.128.0.25
+vip=10.128.0.30
 
 # Array of all master nodes
 allmasters=($master1 $master2 $master3)
@@ -87,11 +87,39 @@ certName=id_rsa
 #            DO NOT EDIT BELOW              #
 #############################################
 # For testing purposes - in case time is wrong due to VM snapshots
+
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Updating and upgrading system packages...${NC}"
+echo -e "${LIGHT_BLUE}"
+sudo apt update && sudo apt upgrade -y
+echo -e "${NC}"
+
+# Install required tools
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Installing tools...${NC}"
+echo -e "${LIGHT_BLUE}"
+sudo apt-get install net-tools jq git htop iptables chrony curl gnupg2 software-properties-common apt-transport-https ca-certificates -y
+echo -e "${NC}"
+
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Configuring Time Synchronization...${NC}"
 echo -e "${LIGHT_BLUE}"
 sudo timedatectl set-ntp off
 sudo timedatectl set-ntp on
+echo -e "${NC}"
+
+# Load required modules for containerization
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Loading container modules...${NC}"
+sudo modprobe overlay
+sudo modprobe br_netfilter
+echo -e "${NC}"
+
+# Disable swap (as recommended for K8s)
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Disabling swap...${NC}"
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+sudo swapoff -a
 echo -e "${NC}"
 
 
@@ -325,8 +353,15 @@ echo -e "${YELLOW}--------------------------------------------------------------
 echo -e "${LIGHT_GREEN}Deploying MetalLB to the RKE2 cluster...${NC}"
 echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Metallb\033[0m"
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl diff -f - -n kube-system
+kubectl get configmap kube-proxy -n kube-system -o yaml | \
+sed -e "s/strictARP: false/strictARP: true/" | \
+kubectl apply -f - -n kube-system
+helm repo add metallb https://metallb.github.io/metallb
+helm repo update
+helm install metallb metallb/metallb --namespace metallb-system --create-namespace
 echo -e "${NC}"
 
 # Download ipAddressPool and configure using lbrange above
@@ -374,13 +409,9 @@ echo -e "${YELLOW}--------------------------------------------------------------
 echo -e "${LIGHT_GREEN}Installing cert-manager and applying CRDs...${NC}"
 echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Cert-Manager\033[0m"
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-helm install cert-manager jetstack/cert-manager \
---namespace cert-manager \
---create-namespace \
---version v1.13.2
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml
+helm repo add jetstack https://charts.jetstack.io --force-update
+helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --version v1.15.3
 kubectl get pods --namespace cert-manager
 echo -e "${NC}"
 
@@ -391,7 +422,6 @@ echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Rancher\033[0m"
 helm install rancher rancher-latest/rancher \
  --namespace cattle-system \
- --set hostname=rancher.my.org \
  --set bootstrapPassword=admin
 kubectl -n cattle-system rollout status deploy/rancher
 kubectl -n cattle-system get deploy rancher
