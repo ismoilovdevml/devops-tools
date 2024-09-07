@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Colors for terminal output
+BLACK='\033[0;30m'
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BROWN='\033[0;33m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+LIGHT_GRAY='\033[0;37m'
+DARK_GRAY='\033[1;30m'
+LIGHT_RED='\033[1;31m'
+LIGHT_GREEN='\033[1;32m'
+YELLOW='\033[1;33m'
+LIGHT_BLUE='\033[1;34m'
+LIGHT_PURPLE='\033[1;35m'
+LIGHT_CYAN='\033[1;36m'
+WHITE='\033[1;37m'
+NC='\033[0m' 
+
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}"
 cat << "EOF"
@@ -97,7 +116,7 @@ done
 # create RKE2's self-installing manifest dir
 sudo mkdir -p /var/lib/rancher/rke2/server/manifests
 # Install the kube-vip deployment into rke2's self-installing manifest folder
-curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/k8s/rke2/kube-vip
+curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/kube-vip
 cat kube-vip | sed 's/$interface/'$interface'/g; s/$vip/'$vip'/g' > $HOME/kube-vip.yaml
 sudo mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
 
@@ -212,7 +231,7 @@ echo -e " \033[32;5mDeploying Metallb\033[0m"
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
 # Download ipAddressPool and configure using lbrange above
-curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/k8s/rke2/ipAddressPool
+curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/ipAddressPool
 cat ipAddressPool | sed 's/$lbrange/'$lbrange'/g' > $HOME/ipAddressPool.yaml
 
 # Step 9: Deploy IP Pools and l2Advertisement
@@ -222,7 +241,7 @@ kubectl wait --namespace metallb-system \
                 --selector=component=controller \
                 --timeout=1800s
 kubectl apply -f ipAddressPool.yaml
-kubectl apply -f https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/k8s/rke2/l2Advertisement.yaml
+kubectl apply -f https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/l2Advertisement.yaml
 
 # Step 10: Install Rancher (Optional - Delete if not required)
 #Install Helm
