@@ -42,24 +42,25 @@ echo -e "${YELLOW}--------------------------------------------------------------
 #############################################
 
 # Version of Kube-VIP to deploy
-KVVERSION="v0.6.3"
+KVVERSION="v0.8.2"
 
 # Set the IP addresses of the admin, masters, and workers nodes
 admin=192.168.3.5
-master1=192.168.3.21
-master2=192.168.3.22
-master3=192.168.3.23
-worker1=192.168.3.24
-worker2=192.168.3.25
+master1=10.128.0.22
+master2=10.128.0.23
+master3=10.162.0.2
+worker1=10.128.0.24
+worker2=10.188.0.2
+worker3=10.188.0.3
 
 # User of remote machines
 user=ubuntu
 
 # Interface used on remotes
-interface=eth0
+interface=ens4
 
 # Set the virtual IP address (VIP)
-vip=192.168.3.50
+vip=10.128.0.25
 
 # Array of all master nodes
 allmasters=($master1 $master2 $master3)
@@ -68,16 +69,16 @@ allmasters=($master1 $master2 $master3)
 masters=($master2 $master3)
 
 # Array of worker nodes
-workers=($worker1 $worker2)
+workers=($worker1 $worker2 $worker3)
 
 # Array of all
-all=($master1 $master2 $master3 $worker1 $worker2)
+all=($master1 $master2 $master3 $worker1 $worker2 $worker3)
 
 # Array of all minus master1
-allnomaster1=($master2 $master3 $worker1 $worker2)
+allnomaster1=($master2 $master3 $worker1 $worker2 $worker3)
 
 #Loadbalancer IP range
-lbrange=192.168.3.60-192.168.3.80
+lbrange=10.128.0.200-10.128.0.240
 
 #ssh certificate name variable
 certName=id_rsa
@@ -86,15 +87,27 @@ certName=id_rsa
 #            DO NOT EDIT BELOW              #
 #############################################
 # For testing purposes - in case time is wrong due to VM snapshots
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Configuring Time Synchronization...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo timedatectl set-ntp off
 sudo timedatectl set-ntp on
+echo -e "${NC}"
+
 
 # Move SSH certs to ~/.ssh and change permissions
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Copying SSH Certificates and Setting Permissions...${NC}"
+echo -e "${LIGHT_BLUE}"
 cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
 chmod 600 /home/$user/.ssh/$certName 
 chmod 644 /home/$user/.ssh/$certName.pub
+echo -e "${NC}"
 
 # Install Kubectl if not already present
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Checking if Kubectl is installed...${NC}"
+echo -e "${LIGHT_BLUE}"
 if ! command -v kubectl version &> /dev/null
 then
     echo -e " \033[31;5mKubectl not found, installing\033[0m"
@@ -103,22 +116,40 @@ then
 else
     echo -e " \033[32;5mKubectl already installed\033[0m"
 fi
+echo -e "${NC}"
 
 # Create SSH Config file to ignore checking (don't use in production!)
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Disabling StrictHostKeyChecking in SSH config...${NC}"
+echo -e "${LIGHT_BLUE}"
 sed -i '1s/^/StrictHostKeyChecking no\n/' ~/.ssh/config
+echo -e "${NC}"
 
 #add ssh keys for all nodes
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Copying SSH keys to all nodes...${NC}"
+echo -e "${LIGHT_BLUE}"
 for node in "${all[@]}"; do
   ssh-copy-id $user@$node
 done
+echo -e "${NC}"
 
 # Step 1: Create Kube VIP
 # create RKE2's self-installing manifest dir
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Creating RKE2 manifests directory...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo mkdir -p /var/lib/rancher/rke2/server/manifests
+echo -e "${NC}"
+
 # Install the kube-vip deployment into rke2's self-installing manifest folder
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Downloading and configuring kube-vip manifest...${NC}"
+echo -e "${LIGHT_BLUE}"
 curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/kube-vip
 cat kube-vip | sed 's/$interface/'$interface'/g; s/$vip/'$vip'/g' > $HOME/kube-vip.yaml
 sudo mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
+echo -e "${NC}"
 
 # Find/Replace all k3s entries to represent rke2
 sudo sed -i 's/k3s/rke2/g' /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
