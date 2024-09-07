@@ -37,51 +37,30 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 
 
-#############################################
-# YOU SHOULD ONLY NEED TO EDIT THIS SECTION #
-#############################################
+# Read from config.yml
+CONFIG_FILE="config.yml"
 
-# Version of Kube-VIP to deploy
-KVVERSION="v0.8.2"
+KVVERSION=$(yq e '.kvversion' $CONFIG_FILE)
+admin=$(yq e '.admin_ip' $CONFIG_FILE)
+master1=$(yq e '.masters[0]' $CONFIG_FILE)
+master2=$(yq e '.masters[1]' $CONFIG_FILE)
+master3=$(yq e '.masters[2]' $CONFIG_FILE)
+worker1=$(yq e '.workers[0]' $CONFIG_FILE)
+worker2=$(yq e '.workers[1]' $CONFIG_FILE)
+worker3=$(yq e '.workers[2]' $CONFIG_FILE)
+user=$(yq e '.user' $CONFIG_FILE)
+interface=$(yq e '.interface' $CONFIG_FILE)
+vip=$(yq e '.vip' $CONFIG_FILE)
+lbrange=$(yq e '.lbrange' $CONFIG_FILE)
+certName=$(yq e '.cert_name' $CONFIG_FILE)
 
-# Set the IP addresses of the admin, masters, and workers nodes
-admin=10.128.0.25
-master1=10.128.0.22
-master2=10.128.0.23
-master3=10.162.0.2
-worker1=10.128.0.24
-worker2=10.188.0.2
-worker3=10.188.0.3
-
-# User of remote machines
-user=ubuntu
-
-# Interface used on remotes
-interface=ens4
-
-# Set the virtual IP address (VIP)
-vip=10.128.0.30
-
-# Array of all master nodes
+# Arrays of master and worker nodes
 allmasters=($master1 $master2 $master3)
-
-# Array of master nodes
 masters=($master2 $master3)
-
-# Array of worker nodes
 workers=($worker1 $worker2 $worker3)
-
-# Array of all
 all=($master1 $master2 $master3 $worker1 $worker2 $worker3)
-
-# Array of all minus master1
 allnomaster1=($master2 $master3 $worker1 $worker2 $worker3)
 
-#Loadbalancer IP range
-lbrange=10.128.0.200-10.128.0.240
-
-#ssh certificate name variable
-certName=id_rsa
 
 #############################################
 #            DO NOT EDIT BELOW              #
@@ -124,13 +103,13 @@ echo -e "${NC}"
 
 
 # Move SSH certs to ~/.ssh and change permissions
-echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
-echo -e "${LIGHT_GREEN}Copying SSH Certificates and Setting Permissions...${NC}"
-echo -e "${LIGHT_BLUE}"
-cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
-chmod 600 /home/$user/.ssh/$certName 
-chmod 644 /home/$user/.ssh/$certName.pub
-echo -e "${NC}"
+# echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+# echo -e "${LIGHT_GREEN}Copying SSH Certificates and Setting Permissions...${NC}"
+# echo -e "${LIGHT_BLUE}"
+# cp /home/$user/{$certName,$certName.pub} /home/$user/.ssh
+# chmod 600 /home/$user/.ssh/$certName 
+# chmod 644 /home/$user/.ssh/$certName.pub
+# echo -e "${NC}"
 
 # Install Kubectl if not already present
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
@@ -147,20 +126,20 @@ fi
 echo -e "${NC}"
 
 # Create SSH Config file to ignore checking (don't use in production!)
-echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
-echo -e "${LIGHT_GREEN}Disabling StrictHostKeyChecking in SSH config...${NC}"
-echo -e "${LIGHT_BLUE}"
-sed -i '1s/^/StrictHostKeyChecking no\n/' ~/.ssh/config
-echo -e "${NC}"
+# echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+# echo -e "${LIGHT_GREEN}Disabling StrictHostKeyChecking in SSH config...${NC}"
+# echo -e "${LIGHT_BLUE}"
+# sed -i '1s/^/StrictHostKeyChecking no\n/' ~/.ssh/config
+# echo -e "${NC}"
 
-#add ssh keys for all nodes
-echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
-echo -e "${LIGHT_GREEN}Copying SSH keys to all nodes...${NC}"
-echo -e "${LIGHT_BLUE}"
-for node in "${all[@]}"; do
-  ssh-copy-id $user@$node
-done
-echo -e "${NC}"
+# #add ssh keys for all nodes
+# echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+# echo -e "${LIGHT_GREEN}Copying SSH keys to all nodes...${NC}"
+# echo -e "${LIGHT_BLUE}"
+# for node in "${all[@]}"; do
+#   ssh-copy-id $user@$node
+# done
+# echo -e "${NC}"
 
 # Step 1: Create Kube VIP
 # create RKE2's self-installing manifest dir

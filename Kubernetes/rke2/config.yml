@@ -1,0 +1,24 @@
+# Version of Kube-VIP to deploy
+kvversion: "v0.8.2"
+# Admin serverining IP manzili
+admin_ip: "10.128.0.25"
+# IP addresses of master nodes
+masters:
+  - "10.128.0.22"
+  - "10.128.0.23"
+  - "10.162.0.2"
+# IP addresses of worker nodes
+workers:
+  - "10.128.0.24"
+  - "10.188.0.2"
+  - "10.188.0.3"
+# User of remote machines
+user: "root"
+# Interface used on remotes
+interface: "ens4"
+# Set the virtual IP address (VIP)
+vip: "10.128.0.30"
+#Loadbalancer IP range
+lbrange: "10.128.0.200-10.128.0.240"
+#ssh certificate name variable
+# cert_name: "id_rsa"
