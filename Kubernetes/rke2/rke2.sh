@@ -152,15 +152,34 @@ sudo mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
 echo -e "${NC}"
 
 # Find/Replace all k3s entries to represent rke2
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Modifying kube-vip manifest to use RKE2...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo sed -i 's/k3s/rke2/g' /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
+echo -e "${NC}"
 # copy kube-vip.yaml to home directory
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Copying kube-vip manifest to the home directory...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo cp /var/lib/rancher/rke2/server/manifests/kube-vip.yaml ~/kube-vip.yaml
+echo -e "${NC}"
 # change owner
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Changing ownership of kube-vip.yaml...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo chown $user:$user kube-vip.yaml
+echo -e "${NC}"
 # make kube folder to run kubectl later
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Creating .kube directory for kubectl...${NC}"
+echo -e "${LIGHT_BLUE}"
 mkdir ~/.kube
+echo -e "${NC}"
 
 # create the rke2 config file
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Creating RKE2 config directory and config.yaml file...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo mkdir -p /etc/rancher/rke2
 touch config.yaml
 echo "tls-san:" >> config.yaml 
@@ -171,21 +190,38 @@ echo "  - $master3" >> config.yaml
 echo "write-kubeconfig-mode: 0644" >> config.yaml
 echo "disable:" >> config.yaml
 echo "  - rke2-ingress-nginx" >> config.yaml
+echo -e "${NC}"
 # copy config.yaml to rancher directory
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Copying config.yaml to /etc/rancher/rke2 directory...${NC}"
+echo -e "${LIGHT_BLUE}"
 sudo cp ~/config.yaml /etc/rancher/rke2/config.yaml
+echo -e "${NC}"
 
 # update path with rke2-binaries
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Configuring environment variables and kubectl alias...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> ~/.bashrc ; echo 'export PATH=${PATH}:/var/lib/rancher/rke2/bin' >> ~/.bashrc ; echo 'alias k=kubectl' >> ~/.bashrc ; source ~/.bashrc ;
+echo -e "${NC}"
 
 # Step 2: Copy kube-vip.yaml and certs to all masters
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Copying kube-vip.yaml, config.yaml, and SSH keys to all master nodes...${NC}"
+echo -e "${LIGHT_BLUE}"
 for newnode in "${allmasters[@]}"; do
   scp -i ~/.ssh/$certName $HOME/kube-vip.yaml $user@$newnode:~/kube-vip.yaml
   scp -i ~/.ssh/$certName $HOME/config.yaml $user@$newnode:~/config.yaml
   scp -i ~/.ssh/$certName ~/.ssh/{$certName,$certName.pub} $user@$newnode:~/.ssh
   echo -e " \033[32;5mCopied successfully!\033[0m"
 done
+echo -e "${NC}"
 
 # Step 3: Connect to Master1 and move kube-vip.yaml and config.yaml. Then install RKE2, copy token back to admin machine. We then use the token to bootstrap additional masternodes
+
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Connecting to Master1, installing RKE2, and copying token...${NC}"
+echo -e "${LIGHT_BLUE}"
 ssh -tt $user@$master1 -i ~/.ssh/$certName sudo su <<EOF
 mkdir -p /var/lib/rancher/rke2/server/manifests
 mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
@@ -202,20 +238,32 @@ scp -i /home/$user/.ssh/$certName /etc/rancher/rke2/rke2.yaml $user@$admin:~/.ku
 exit
 EOF
 echo -e " \033[32;5mMaster1 Completed\033[0m"
+echo -e "${NC}"
 
 # Step 4: Set variable to the token we just extracted, set kube config location
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Configuring kubeconfig and updating Master1 IP...${NC}"
+echo -e "${LIGHT_BLUE}"
 token=`cat token`
 sudo cat ~/.kube/rke2.yaml | sed 's/127.0.0.1/'$master1'/g' > $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 export KUBECONFIG=${HOME}/.kube/config
 sudo cp ~/.kube/config /etc/rancher/rke2/rke2.yaml
-kubectl get nodes
+kubectl get nodes -o wide
+echo -e "${NC}"
 
 # Step 5: Install kube-vip as network LoadBalancer - Install the kube-vip Cloud Provider
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Applying Kube-Vip RBAC and cloud controller manifests...${NC}"
+echo -e "${LIGHT_BLUE}"
 kubectl apply -f https://kube-vip.io/manifests/rbac.yaml
 kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+echo -e "${NC}"
 
 # Step 6: Add other Masternodes, note we import the token we extracted from step 3
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Adding additional master nodes to the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
 for newnode in "${masters[@]}"; do
   ssh -tt $user@$newnode -i ~/.ssh/$certName sudo su <<EOF
   mkdir -p /etc/rancher/rke2
@@ -234,10 +282,18 @@ for newnode in "${masters[@]}"; do
 EOF
   echo -e " \033[32;5mMaster node joined successfully!\033[0m"
 done
+echo -e "${NC}"
 
-kubectl get nodes
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Checking the status of all nodes in the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
+kubectl get nodes -o wide
+echo -e "${NC}"
 
 # Step 7: Add Workers
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Adding worker nodes to the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
 for newnode in "${workers[@]}"; do
   ssh -tt $user@$newnode -i ~/.ssh/$certName sudo su <<EOF
   mkdir -p /etc/rancher/rke2
@@ -254,18 +310,37 @@ for newnode in "${workers[@]}"; do
 EOF
   echo -e " \033[32;5mWorker node joined successfully!\033[0m"
 done
+echo -e "${NC}"
 
-kubectl get nodes
+
+
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Checking the status of all nodes in the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
+kubectl get nodes -o wide
+echo -e "${NC}"
 
 # Step 8: Install Metallb
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Deploying MetalLB to the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Metallb\033[0m"
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.12.1/manifests/namespace.yaml
 kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.12/config/manifests/metallb-native.yaml
+echo -e "${NC}"
+
 # Download ipAddressPool and configure using lbrange above
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Downloading and configuring the MetalLB IP Address Pool...${NC}"
+echo -e "${LIGHT_BLUE}"
 curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/ipAddressPool
 cat ipAddressPool | sed 's/$lbrange/'$lbrange'/g' > $HOME/ipAddressPool.yaml
+echo -e "${NC}"
 
 # Step 9: Deploy IP Pools and l2Advertisement
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Waiting for MetalLB controller to be ready and configuring IP Address Pool and Layer 2 Advertisement...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mAdding IP Pools, waiting for Metallb to be available first. This can take a long time as we're likely being rate limited for container pulls...\033[0m"
 kubectl wait --namespace metallb-system \
                 --for=condition=ready pod \
@@ -273,19 +348,31 @@ kubectl wait --namespace metallb-system \
                 --timeout=1800s
 kubectl apply -f ipAddressPool.yaml
 kubectl apply -f https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/l2Advertisement.yaml
+echo -e "${NC}"
 
 # Step 10: Install Rancher (Optional - Delete if not required)
 #Install Helm
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Downloading and installing Helm...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mInstalling Helm\033[0m"
 curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
 chmod 700 get_helm.sh
 ./get_helm.sh
+echo -e "${NC}"
 
 # Add Rancher Helm Repo & create namespace
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Adding Rancher Helm repository and creating cattle-system namespace...${NC}"
+echo -e "${LIGHT_BLUE}"
 helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
 kubectl create namespace cattle-system
+echo -e "${NC}"
 
 # Install Cert-Manager
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Installing cert-manager and applying CRDs...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Cert-Manager\033[0m"
 kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.2/cert-manager.crds.yaml
 helm repo add jetstack https://charts.jetstack.io
@@ -295,8 +382,12 @@ helm install cert-manager jetstack/cert-manager \
 --create-namespace \
 --version v1.13.2
 kubectl get pods --namespace cert-manager
+echo -e "${NC}"
 
 # Install Rancher
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Deploying Rancher to the RKE2 cluster...${NC}"
+echo -e "${LIGHT_BLUE}"
 echo -e " \033[32;5mDeploying Rancher\033[0m"
 helm install rancher rancher-latest/rancher \
  --namespace cattle-system \
@@ -304,8 +395,12 @@ helm install rancher rancher-latest/rancher \
  --set bootstrapPassword=admin
 kubectl -n cattle-system rollout status deploy/rancher
 kubectl -n cattle-system get deploy rancher
+echo -e "${NC}"
 
 # Add Rancher LoadBalancer
+echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
+echo -e "${LIGHT_GREEN}Exposing Rancher as a LoadBalancer service...${NC}"
+echo -e "${LIGHT_BLUE}"
 kubectl get svc -n cattle-system
 kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
 while [[ $(kubectl get svc -n cattle-system 'jsonpath={..status.conditions[?(@.type=="Pending")].status}') = "True" ]]; do
@@ -315,3 +410,4 @@ done
 kubectl get svc -n cattle-system
 
 echo -e " \033[32;5mAccess Rancher from the IP above - Password is admin!\033[0m"
+echo -e "${NC}"
