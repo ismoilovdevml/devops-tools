@@ -1,0 +1,4 @@
+---
+minio_directory: /mnt/data
+minio_admin_user: admin
+minio_admin_user_password: wo#*4fd-LDSsgsa

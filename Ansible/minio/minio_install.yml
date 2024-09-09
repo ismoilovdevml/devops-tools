@@ -1,0 +1,95 @@
+---
+- name: Install and configure MinIO
+  hosts: minio_servers
+  become: yes
+  vars_files:
+    - main.yml
+  tasks:
+
+    - name: Install wget
+      apt:
+        name: wget
+        state: present
+        update_cache: yes
+
+    - name: Download MinIO binary
+      get_url:
+        url: https://dl.min.io/server/minio/release/linux-amd64/minio
+        dest: /usr/local/bin/minio
+        mode: '0755'
+
+    - name: Create MinIO user and group
+      group:
+        name: minio-user
+        state: present
+
+    - name: Add MinIO user
+      user:
+        name: minio-user
+        group: minio-user
+        system: yes
+        shell: /sbin/nologin
+
+    - name: Create MinIO working directory
+      file:
+        path: "{{ minio_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: Change ownership of MinIO directory
+      file:
+        path: "{{ minio_directory }}"
+        owner: minio-user
+        group: minio-user
+        state: directory
+        recurse: yes
+
+    - name: Create MinIO environment file with variables from main.yml
+      copy:
+        content: |
+          MINIO_ROOT_USER={{ minio_admin_user }}
+          MINIO_ROOT_PASSWORD={{ minio_admin_user_password }}
+          MINIO_VOLUMES="{{ minio_directory }}"
+          MINIO_OPTS="--console-address :9001"
+        dest: /etc/default/minio
+        mode: '0644'
+
+    - name: Create systemd service for MinIO
+      copy:
+        content: |
+          [Unit]
+          Description=MinIO
+          Documentation=https://min.io/docs/minio/linux/index.html
+          Wants=network-online.target
+          After=network-online.target
+          AssertFileIsExecutable=/usr/local/bin/minio
+
+          [Service]
+          WorkingDirectory=/usr/local
+          User=minio-user
+          Group=minio-user
+          ProtectProc=invisible
+
+          EnvironmentFile=-/etc/default/minio
+          ExecStartPre=/bin/bash -c "if [ -z \"${MINIO_VOLUMES}\" ]; then echo \"Variable MINIO_VOLUMES not set in /etc/default/minio\"; exit 1; fi"
+          ExecStart=/usr/local/bin/minio server $MINIO_OPTS $MINIO_VOLUMES
+          Restart=always
+          LimitNOFILE=65536
+          TasksMax=infinity
+          TimeoutStopSec=infinity
+          SendSIGKILL=no
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /usr/lib/systemd/system/minio.service
+        mode: '0644'
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Start and enable MinIO service
+      systemd:
+        name: minio
+        enabled: yes
+        state: started
