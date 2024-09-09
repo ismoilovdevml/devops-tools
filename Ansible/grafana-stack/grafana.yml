@@ -1,0 +1,87 @@
+---
+- name: Install Grafana
+  hosts: grafana
+  become: true
+  tasks:
+    - name: Install dependencies (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - apt-transport-https
+        - software-properties-common
+        - wget
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Add Grafana GPG key and repository (Debian/Ubuntu)
+      block:
+        - name: Add Grafana GPG key
+          ansible.builtin.shell: |
+            mkdir -p /etc/apt/keyrings/
+            wget -q -O - https://apt.grafana.com/gpg.key | gpg --dearmor | tee /etc/apt/keyrings/grafana.gpg > /dev/null
+
+        - name: Add Grafana repository
+          ansible.builtin.apt_repository:
+            repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+            state: present
+
+        - name: Update APT cache and install Grafana
+          ansible.builtin.apt:
+            update_cache: yes
+            name: grafana
+            state: present
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Install Grafana (CentOS/RHEL/Fedora)
+      block:
+        - name: Add Grafana GPG key
+          ansible.builtin.shell: |
+            wget -q -O /etc/yum.repos.d/grafana.repo https://rpm.grafana.com/gpg.key
+            rpm --import /etc/yum.repos.d/grafana.repo
+
+        - name: Add Grafana repository
+          ansible.builtin.copy:
+            dest: /etc/yum.repos.d/grafana.repo
+            content: |
+              [grafana]
+              name=grafana
+              baseurl=https://rpm.grafana.com
+              repo_gpgcheck=1
+              enabled=1
+              gpgcheck=1
+              gpgkey=https://rpm.grafana.com/gpg.key
+              sslverify=1
+              sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+        - name: Install Grafana
+          ansible.builtin.yum:
+            name: grafana
+            state: present
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+
+    - name: Install Grafana (SUSE/openSUSE)
+      block:
+        - name: Add Grafana GPG key
+          ansible.builtin.shell: |
+            wget -q -O gpg.key https://rpm.grafana.com/gpg.key
+            rpm --import gpg.key
+
+        - name: Add Grafana repository
+          ansible.builtin.zypper_repository:
+            name: grafana
+            description: "Grafana repository"
+            baseurl: https://rpm.grafana.com
+            enabled: yes
+            autorefresh: yes
+
+        - name: Install Grafana
+          ansible.builtin.zypper:
+            name: grafana
+            state: present
+      when: ansible_distribution in ['openSUSE', 'SUSE Linux Enterprise Server']
+
+    - name: Enable and start Grafana
+      ansible.builtin.systemd:
+        name: grafana-server
+        enabled: yes
+        state: started

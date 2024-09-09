@@ -1,0 +1,98 @@
+---
+- name: Install Prometheus on Prometheus Servers
+  hosts: prometheus
+  become: yes
+  tasks:
+
+    - name: Download Prometheus archive
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v2.54.1/prometheus-2.54.1.linux-amd64.tar.gz"
+        dest: "/tmp/prometheus-2.54.1.linux-amd64.tar.gz"
+
+    - name: Extract Prometheus archive
+      ansible.builtin.unarchive:
+        src: "/tmp/prometheus-2.54.1.linux-amd64.tar.gz"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Create Prometheus directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
+
+    - name: Move Prometheus binaries
+      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/prometheus /usr/local/bin/prometheus
+      notify: reload_prometheus
+
+    - name: Move Promtool
+      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/promtool /usr/local/bin/promtool
+
+    - name: Move prometheus.yml
+      ansible.builtin.copy:
+        src: /tmp/prometheus-2.54.1.linux-amd64/prometheus.yml
+        dest: /etc/prometheus/prometheus.yml
+        remote_src: yes
+
+    - name: Move console files
+      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/consoles /etc/prometheus/consoles
+
+    - name: Move console libraries
+      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/console_libraries /etc/prometheus/console_libraries
+
+    - name: Create prometheus user
+      ansible.builtin.user:
+        name: prometheus
+        shell: /bin/false
+        system: yes
+
+    - name: Set permissions for Prometheus
+      ansible.builtin.command: chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+
+    - name: Create Prometheus systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus
+          Wants=network-online.target
+          After=network-online.target
+          
+          [Service]
+          User=prometheus
+          Group=prometheus
+          Type=simple
+          Restart=on-failure
+          RestartSec=5s
+          ExecStart=/usr/local/bin/prometheus \
+              --config.file /etc/prometheus/prometheus.yml \
+              --storage.tsdb.path /var/lib/prometheus/ \
+              --web.console.templates=/etc/prometheus/consoles \
+              --web.console.libraries=/etc/prometheus/console_libraries \
+              --web.listen-address=0.0.0.0:9090 \
+              --web.enable-lifecycle \
+              --log.level=info
+          
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Prometheus
+      ansible.builtin.systemd:
+        name: prometheus
+        enabled: yes
+        state: started
+
+  handlers:
+    - name: reload_prometheus
+      ansible.builtin.systemd:
+        name: prometheus
+        state: restarted

@@ -1,0 +1,58 @@
+---
+- name: Install Node Exporter on Node Exporter Servers
+  hosts: node_exporter
+  become: yes
+  tasks:
+
+    - name: Download Node Exporter archive
+      ansible.builtin.get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz"
+        dest: "/tmp/node_exporter-1.8.2.linux-amd64.tar.gz"
+
+    - name: Extract Node Exporter archive
+      ansible.builtin.unarchive:
+        src: "/tmp/node_exporter-1.8.2.linux-amd64.tar.gz"
+        dest: "/tmp"
+        remote_src: yes
+
+    - name: Move Node Exporter binary
+      ansible.builtin.command: mv /tmp/node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
+
+    - name: Clean up Node Exporter archive
+      ansible.builtin.command: rm -rf /tmp/node_exporter-1.8.2.linux-amd64*
+
+    - name: Create node_exporter user
+      ansible.builtin.user:
+        name: node_exporter
+        shell: /bin/false
+        system: yes
+
+    - name: Create Node Exporter systemd service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          Wants=network-online.target
+          After=network-online.target
+          
+          [Service]
+          User=node_exporter
+          Group=node_exporter
+          Type=simple
+          Restart=on-failure
+          RestartSec=5s
+          ExecStart=/usr/local/bin/node_exporter
+          
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Node Exporter service
+      ansible.builtin.systemd:
+        name: node_exporter
+        enabled: yes
+        state: started
