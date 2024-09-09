@@ -1,0 +1,83 @@
+---
+- name: Update and upgrade multiple OS
+  hosts: all
+  become: true
+  tasks:
+    - name: Gather OS facts
+      ansible.builtin.setup:
+        filter: ansible_distribution*
+
+    - name: Update and upgrade Ubuntu/Debian
+      block:
+        - name: Update package list
+          ansible.builtin.apt:
+            update_cache: yes
+            cache_valid_time: 3600
+
+        - name: Upgrade packages
+          ansible.builtin.apt:
+            upgrade: dist
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Update and upgrade CentOS/RHEL
+      block:
+        - name: Update package list
+          ansible.builtin.yum:
+            update_cache: yes
+
+        - name: Upgrade packages
+          ansible.builtin.yum:
+            name: "*"
+            state: latest
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    - name: Update and upgrade Fedora
+      block:
+        - name: Update package list
+          ansible.builtin.dnf:
+            update_cache: yes
+
+        - name: Upgrade packages
+          ansible.builtin.dnf:
+            name: "*"
+            state: latest
+      when: ansible_distribution == 'Fedora'
+
+    - name: Install required tools on Ubuntu/Debian
+      block:
+        - name: Install common tools
+          ansible.builtin.apt:
+            name:
+              - git
+              - curl
+              - wget
+              - vim
+              - htop
+            state: present
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Install required tools on CentOS/RHEL
+      block:
+        - name: Install common tools
+          ansible.builtin.yum:
+            name:
+              - git
+              - curl
+              - wget
+              - vim
+              - htop
+            state: present
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    - name: Install required tools on Fedora
+      block:
+        - name: Install common tools
+          ansible.builtin.dnf:
+            name:
+              - git
+              - curl
+              - wget
+              - vim
+              - htop
+            state: present
+      when: ansible_distribution == 'Fedora'
