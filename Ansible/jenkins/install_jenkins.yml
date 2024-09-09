@@ -1,0 +1,77 @@
+---
+- name: Install Jenkins on multiple OS
+  hosts: jenkins_servers
+  become: true
+  vars:
+    java_package_debian: openjdk-17-jre
+    java_package_rhel: java-17-openjdk
+    jenkins_repo_debian: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    jenkins_repo_rhel: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    jenkins_key_rhel: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+  tasks:
+
+    - name: Install Jenkins on Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      apt:
+        update_cache: yes
+        name:
+          - fontconfig
+          - "{{ java_package_debian }}"
+        state: present
+
+    - name: Add Jenkins keyring for Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      ansible.builtin.command:
+        cmd: wget -O /usr/share/keyrings/jenkins-keyring.asc "{{ jenkins_repo_debian }}"
+
+    - name: Add Jenkins repo to sources.list on Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      ansible.builtin.shell: |
+        echo "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/" | tee /etc/apt/sources.list.d/jenkins.list
+
+    - name: Install Jenkins on Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      apt:
+        update_cache: yes
+        name: jenkins
+        state: present
+
+    - name: Enable and start Jenkins on Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      systemd:
+        name: jenkins
+        enabled: yes
+        state: started
+
+    - name: Install Jenkins on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      ansible.builtin.command:
+        cmd: wget -O /etc/yum.repos.d/jenkins.repo "{{ jenkins_repo_rhel }}"
+
+    - name: Import Jenkins key on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      ansible.builtin.command:
+        cmd: rpm --import "{{ jenkins_key_rhel }}"
+
+    - name: Upgrade packages on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      ansible.builtin.yum:
+        name: "*"
+        state: latest
+
+    - name: Install required dependencies on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      ansible.builtin.yum:
+        name:
+          - fontconfig
+          - "{{ java_package_rhel }}"
+          - jenkins
+        state: present
+
+    - name: Enable and start Jenkins on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      systemd:
+        name: jenkins
+        enabled: yes
+        state: started
