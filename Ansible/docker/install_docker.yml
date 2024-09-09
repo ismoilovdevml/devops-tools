@@ -1,0 +1,162 @@
+---
+- name: Install Docker on multiple OS
+  hosts: all
+  become: true
+  tasks:
+    - name: Gather facts
+      ansible.builtin.setup:
+        filter: ansible_distribution*
+
+    - name: Remove old Docker versions (Ubuntu/Debian)
+      ansible.builtin.package:
+        name:
+          - docker.io
+          - docker-doc
+          - docker-compose
+          - docker-compose-v2
+          - podman-docker
+          - containerd
+          - runc
+        state: absent
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Remove old Docker versions (CentOS/RHEL/Fedora)
+      ansible.builtin.shell: |
+        sudo {{ ansible_pkg_mgr }} remove -y docker \
+                                        docker-client \
+                                        docker-client-latest \
+                                        docker-common \
+                                        docker-latest \
+                                        docker-latest-logrotate \
+                                        docker-logrotate \
+                                        docker-engine
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+
+    - name: Install Docker on Ubuntu
+      block:
+        - name: Install dependencies
+          ansible.builtin.apt:
+            name: "{{ item }}"
+            state: present
+          loop:
+            - ca-certificates
+            - curl
+
+        - name: Add Docker’s official GPG key
+          ansible.builtin.shell: |
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+
+        - name: Add Docker APT repository
+          ansible.builtin.shell: |
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list
+            apt-get update
+
+        - name: Install Docker
+          ansible.builtin.apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+              - docker-compose
+            state: present
+      when: ansible_distribution == 'Ubuntu'
+
+    - name: Install Docker on Debian
+      block:
+        - name: Install dependencies
+          ansible.builtin.apt:
+            name: "{{ item }}"
+            state: present
+          loop:
+            - ca-certificates
+            - curl
+
+        - name: Add Docker’s official GPG key
+          ansible.builtin.shell: |
+            install -m 0755 -d /etc/apt/keyrings
+            curl -fsSL https://download.docker.com/linux/debian/gpg -o /etc/apt/keyrings/docker.asc
+            chmod a+r /etc/apt/keyrings/docker.asc
+
+        - name: Add Docker APT repository
+          ansible.builtin.shell: |
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list
+            apt-get update
+
+        - name: Install Docker
+          ansible.builtin.apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+              - docker-compose
+            state: present
+      when: ansible_distribution == 'Debian'
+
+    - name: Install Docker on CentOS/RHEL
+      block:
+        - name: Install yum-utils
+          ansible.builtin.yum:
+            name: yum-utils
+            state: present
+
+        - name: Add Docker repository
+          ansible.builtin.shell: yum-config-manager --add-repo https://download.docker.com/linux/{{ ansible_distribution | lower }}/docker-ce.repo
+
+        - name: Install Docker
+          ansible.builtin.yum:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+              - docker-compose
+            state: present
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    - name: Install Docker on Fedora
+      block:
+        - name: Install dnf-plugins-core
+          ansible.builtin.dnf:
+            name: dnf-plugins-core
+            state: present
+
+        - name: Add Docker repository
+          ansible.builtin.shell: dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+
+        - name: Install Docker
+          ansible.builtin.dnf:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+              - docker-compose
+            state: present
+      when: ansible_distribution == 'Fedora'
+
+    - name: Start and enable Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add user to Docker group
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: yes
+
+    - name: Set permissions on Docker socket
+      ansible.builtin.file:
+        path: /var/run/docker.sock
+        owner: "{{ ansible_user_id }}"
+        group: docker
+        mode: '0666'
