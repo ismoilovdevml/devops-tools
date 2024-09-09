@@ -1,0 +1,54 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - software-properties-common
+          - ca-certificates
+          - curl
+          - gnupg
+          - zip
+          - unzip
+        state: present
+        update_cache: yes
+
+- hosts: load_balancer
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+        autoclean: yes
+        autoremove: yes
+
+    - name: Install software-properties-common without recommends
+      apt:
+        name: software-properties-common
+        state: present
+        install_recommends: no
+
+    - name: Add HAProxy PPA repository
+      apt_repository:
+        repo: ppa:vbernat/haproxy-2.8
+        state: present
+
+    - name: Install HAProxy 2.8
+      apt:
+        name: haproxy=2.8.*
+        state: present

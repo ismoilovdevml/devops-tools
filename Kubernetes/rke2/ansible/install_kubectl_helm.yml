@@ -1,0 +1,63 @@
+---
+- hosts: masters
+  become: yes
+  tasks:
+    - name: Download kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl.sha256"
+        echo "$(cat kubectl.sha256)  kubectl" | sha256sum --check
+
+    - name: Install kubectl
+      shell: |
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        kubectl version --client
+      args:
+        warn: false
+
+    - name: Download and install Helm
+      shell: |
+        curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 700 get_helm.sh
+        ./get_helm.sh
+
+    - name: Add KUBECONFIG to bashrc
+      lineinfile:
+        path: /root/.bashrc
+        line: 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml'
+        state: present
+
+    - name: Manually set KUBECONFIG in the current session
+      shell: "export KUBECONFIG=/etc/rancher/rke2/rke2.yaml && kubectl get nodes"
+      register: kubectl_output
+
+    - debug:
+        msg: "Kubectl command output: {{ kubectl_output.stdout }}"
+
+    - name: Set permissions for /etc/rancher/rke2
+      file:
+        path: /etc/rancher/rke2
+        mode: '0755'
+
+    - name: Set permissions for /etc/rancher
+      file:
+        path: /etc/rancher
+        mode: '0755'
+
+    - name: Set permissions for /etc/rancher/rke2/rke2.yaml
+      file:
+        path: /etc/rancher/rke2/rke2.yaml
+        mode: '0644'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: Change permission to 600 for /etc/rancher/rke2/rke2.yaml
+      file:
+        path: /etc/rancher/rke2/rke2.yaml
+        mode: '0600'
+
+    - name: Change ownership of /etc/rancher/rke2/rke2.yaml to user
+      file:
+        path: /etc/rancher/rke2/rke2.yaml
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
