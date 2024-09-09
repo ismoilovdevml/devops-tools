@@ -1,0 +1,22 @@
+---
+- name: Set PostgreSQL user password using psql as root
+  become: yes
+  shell: su - postgres -c "psql -c \"ALTER USER postgres PASSWORD '{{ postgresql_password }}';\""
+
+- name: Configure PostgreSQL to listen on all interfaces
+  lineinfile:
+    path: "/etc/postgresql/{{ postgresql_version }}/main/postgresql.conf"
+    regexp: "^#listen_addresses ="
+    line: "listen_addresses = '{{ listen_address }}'"
+    state: present
+
+- name: Add pg_hba.conf rules
+  lineinfile:
+    path: "/etc/postgresql/{{ postgresql_version }}/main/pg_hba.conf"
+    line: "host    all             all              {{ expose_address }}              md5"
+    state: present
+
+- name: Restart PostgreSQL service
+  systemd:
+    name: "postgresql"
+    state: restarted

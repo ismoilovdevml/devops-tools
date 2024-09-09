@@ -1,0 +1,32 @@
+---
+- name: Install PostgreSQL repository on Red Hat-based systems
+  yum:
+    name: "https://download.postgresql.org/pub/repos/yum/reporpms/EL-{{ ansible_distribution_major_version }}-x86_64/pgdg-redhat-repo-latest.noarch.rpm"
+    state: present
+
+- name: Disable default PostgreSQL module on Red Hat 8 or higher
+  when: ansible_distribution_major_version | int >= 8
+  shell: dnf -qy module disable postgresql
+
+- name: Install PostgreSQL server on Red Hat-based systems
+  yum:
+    name: "postgresql{{ postgresql_version }}-server"
+    state: present
+
+- name: Initialize PostgreSQL database on Red Hat-based systems
+  command: >
+    /usr/pgsql-{{ postgresql_version }}/bin/postgresql-{{ postgresql_version }}-setup initdb
+  when: ansible_distribution_major_version | int >= 7
+
+- name: Enable and start PostgreSQL service on Red Hat-based systems
+  systemd:
+    name: "postgresql-{{ postgresql_version }}"
+    enabled: yes
+    state: started
+
+- name: Enable PostgreSQL service for RHEL/CentOS 6
+  when: ansible_distribution_major_version | int == 6
+  service:
+    name: "postgresql-{{ postgresql_version }}"
+    enabled: yes
+    state: started

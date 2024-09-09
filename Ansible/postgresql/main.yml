@@ -1,0 +1,5 @@
+---
+postgresql_version: 16
+postgresql_password: "oasjofdjqpwe"
+listen_address: "*"  # Postgresql.conf'da kiritiladi
+expose_address: "0.0.0.0/0"  # pg_hba.conf'da kiritiladi

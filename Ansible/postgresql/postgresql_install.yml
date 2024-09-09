@@ -1,0 +1,22 @@
+---
+- name: Install and configure PostgreSQL
+  hosts: postgresql_servers
+  become: yes
+  vars_files:
+    - main.yml
+
+  tasks:
+    - name: Detect operating system family
+      set_fact:
+        os_family: "{{ ansible_os_family }}"
+
+    - name: Include Debian-based tasks if OS family is Debian
+      include_tasks: tasks/install_postgresql_debian.yml
+      when: ansible_os_family == "Debian"
+
+    - name: Include Red Hat-based tasks if OS family is RedHat
+      include_tasks: tasks/install_postgresql_redhat.yml
+      when: ansible_os_family == "RedHat"
+
+    - name: Configure PostgreSQL after installation
+      include_tasks: tasks/configure_postgresql.yml

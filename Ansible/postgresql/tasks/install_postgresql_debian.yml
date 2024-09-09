@@ -1,0 +1,38 @@
+---
+- name: Install prerequisites on Debian-based systems
+  apt:
+    name:
+      - curl
+      - ca-certificates
+      - postgresql-common
+    state: present
+    update_cache: yes
+
+# - name: Run PostgreSQL repository setup script
+#   command: /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh
+
+- name: Create directory for PostgreSQL keys
+  file:
+    path: /usr/share/postgresql-common/pgdg
+    state: directory
+    mode: '0755'
+
+- name: Download PostgreSQL GPG key
+  command: >
+    curl -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc --fail https://www.postgresql.org/media/keys/ACCC4CF8.asc
+
+- name: Add PostgreSQL repository
+  shell: |
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list
+
+- name: Update apt and install PostgreSQL (latest version)
+  apt:
+    name: postgresql
+    state: present
+    update_cache: yes
+
+- name: Enable and start PostgreSQL service
+  systemd:
+    name: postgresql
+    enabled: yes
+    state: started
