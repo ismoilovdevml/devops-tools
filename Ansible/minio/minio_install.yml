@@ -6,8 +6,8 @@
     - main.yml
   tasks:
 
-    - name: Install wget
-      apt:
+    - name: Install wget on multiple OS
+      package:
         name: wget
         state: present
         update_cache: yes

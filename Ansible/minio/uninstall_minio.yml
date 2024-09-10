@@ -1,0 +1,68 @@
+---
+- name: Uninstall and cleanup MinIO
+  hosts: minio_servers
+  become: yes
+  vars_files:
+    - main.yml
+  tasks:
+
+    - name: Stop and disable MinIO service
+      systemd:
+        name: minio
+        state: stopped
+        enabled: no
+      ignore_errors: yes
+
+    - name: Remove MinIO service file
+      file:
+        path: /usr/lib/systemd/system/minio.service
+        state: absent
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Remove MinIO binary
+      file:
+        path: /usr/local/bin/minio
+        state: absent
+
+    - name: Remove MinIO environment file
+      file:
+        path: /etc/default/minio
+        state: absent
+
+    - name: Remove all files in MinIO data directory
+      become: yes
+      file:
+        path: "{{ minio_directory }}"
+        state: absent
+        recurse: yes
+      ignore_errors: yes
+
+    - name: Remove MinIO data directory
+      become: yes
+      file:
+        path: "{{ minio_directory }}"
+        state: absent
+      ignore_errors: yes
+
+    - name: Remove MinIO user
+      user:
+        name: minio-user
+        state: absent
+      ignore_errors: yes
+      become: yes
+
+    - name: Remove MinIO group
+      group:
+        name: minio-user
+        state: absent
+      ignore_errors: yes
+      become: yes
+
+    - name: Remove wget on multiple OS
+      package:
+        name: wget
+        state: absent
+        purge: yes
