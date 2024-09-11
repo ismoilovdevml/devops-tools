@@ -13,7 +13,7 @@
       systemd:
         name: jenkins
         state: stopped
-      ignore_errors: yes  # Agar xizmat topilmasa ham, davom ettiradi
+      ignore_errors: yes
 
     - name: Uninstall Jenkins and Java on Debian/Ubuntu
       when: ansible_os_family == "Debian"
@@ -65,7 +65,7 @@
       systemd:
         name: jenkins
         state: stopped
-      ignore_errors: yes  # Agar xizmat topilmasa ham, davom ettiradi
+      ignore_errors: yes
 
     - name: Uninstall Jenkins and Java on Red Hat/Fedora/Alma/Rocky
       when: ansible_os_family == "RedHat"
@@ -86,7 +86,7 @@
       when: ansible_os_family == "RedHat"
       ansible.builtin.command:
         cmd: rpm -e gpg-pubkey-$(rpm -q --qf "%{version}-%{release}\n" gpg-pubkey | grep jenkins | awk '{print $1}')
-      ignore_errors: yes  # Agar kalit topilmasa, davom ettiradi
+      ignore_errors: yes
 
     - name: Remove Jenkins cache, log, and data directories on Red Hat/Fedora/Alma/Rocky
       when: ansible_os_family == "RedHat"

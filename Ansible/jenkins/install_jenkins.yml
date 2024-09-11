@@ -11,6 +11,19 @@
 
   tasks:
 
+    - name: Install wget on Debian/Ubuntu
+      when: ansible_os_family == "Debian"
+      apt:
+        update_cache: yes
+        name: wget
+        state: present
+
+    - name: Install wget on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat"
+      yum:
+        name: wget
+        state: present
+
     - name: Install Jenkins on Debian/Ubuntu
       when: ansible_os_family == "Debian"
       apt:
