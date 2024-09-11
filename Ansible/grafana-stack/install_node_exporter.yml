@@ -2,24 +2,26 @@
 - name: Install Node Exporter on Node Exporter Servers
   hosts: node_exporter
   become: yes
+  vars_files:
+    - vars.yml
   tasks:
 
     - name: Download Node Exporter archive
       ansible.builtin.get_url:
-        url: "https://github.com/prometheus/node_exporter/releases/download/v1.8.2/node_exporter-1.8.2.linux-amd64.tar.gz"
-        dest: "/tmp/node_exporter-1.8.2.linux-amd64.tar.gz"
+        url: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
 
     - name: Extract Node Exporter archive
       ansible.builtin.unarchive:
-        src: "/tmp/node_exporter-1.8.2.linux-amd64.tar.gz"
+        src: "/tmp/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz"
         dest: "/tmp"
         remote_src: yes
 
     - name: Move Node Exporter binary
-      ansible.builtin.command: mv /tmp/node_exporter-1.8.2.linux-amd64/node_exporter /usr/local/bin/
+      ansible.builtin.command: mv /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter /usr/local/bin/
 
     - name: Clean up Node Exporter archive
-      ansible.builtin.command: rm -rf /tmp/node_exporter-1.8.2.linux-amd64*
+      ansible.builtin.command: rm -rf /tmp/node_exporter-{{ node_exporter_version }}.linux-amd64*
 
     - name: Create node_exporter user
       ansible.builtin.user:

@@ -1,0 +1,100 @@
+---
+- name: Uninstall Grafana and cleanup
+  hosts: grafana
+  become: true
+  tasks:
+
+    - name: Check if Grafana service is present
+      ansible.builtin.systemd:
+        name: grafana-server
+        state: stopped
+      register: grafana_service_status
+      ignore_errors: yes
+      failed_when: false
+
+    - name: Stop Grafana service if it exists
+      ansible.builtin.systemd:
+        name: grafana-server
+        state: stopped
+      when: grafana_service_status.failed is not defined
+
+    - name: Remove Grafana package (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: grafana
+        state: absent
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Remove Grafana package (CentOS/RHEL/Fedora)
+      ansible.builtin.yum:
+        name: grafana
+        state: absent
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+
+    - name: Remove Grafana package (SUSE/openSUSE)
+      ansible.builtin.zypper:
+        name: grafana
+        state: absent
+      when: ansible_distribution in ['openSUSE', 'SUSE Linux Enterprise Server']
+
+    - name: Remove Grafana repository (Debian/Ubuntu)
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/grafana.gpg] https://apt.grafana.com stable main"
+        state: absent
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Remove Grafana repository (CentOS/RHEL/Fedora)
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/grafana.repo
+        state: absent
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+
+    - name: Remove Grafana repository (SUSE/openSUSE)
+      ansible.builtin.zypper_repository:
+        name: grafana
+        state: absent
+      when: ansible_distribution in ['openSUSE', 'SUSE Linux Enterprise Server']
+
+    - name: Remove Grafana configuration and data directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/grafana
+        - /var/lib/grafana
+        - /var/log/grafana
+
+    - name: Clean up Grafana GPG key (Debian/Ubuntu)
+      ansible.builtin.file:
+        path: /etc/apt/keyrings/grafana.gpg
+        state: absent
+      when: ansible_distribution in ['Ubuntu', 'Debian']
+
+    - name: Find all installed GPG keys (CentOS/RHEL/Fedora)
+      ansible.builtin.shell: "rpm -q gpg-pubkey --qf '%{VERSION}-%{RELEASE}\\n'"
+      register: gpg_keys
+      changed_when: false
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+
+    - name: Clean up Grafana GPG keys (CentOS/RHEL/Fedora)
+      ansible.builtin.shell: |
+        rpm --erase gpg-pubkey-{{ item }}
+      loop: "{{ gpg_keys.stdout_lines }}"
+      when:
+        - ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+        - gpg_keys.stdout != ''
+        - item != ''
+      ignore_errors: yes
+
+    - name: Check if Grafana GPG key exists (SUSE/openSUSE)
+      ansible.builtin.shell: "rpm -q gpg-pubkey"
+      register: gpg_key_check_suse
+      changed_when: false
+      ignore_errors: yes
+      when: ansible_distribution in ['openSUSE', 'SUSE Linux Enterprise Server']
+
+    - name: Clean up Grafana GPG key (SUSE/openSUSE) if it exists
+      ansible.builtin.shell: |
+        rpm --erase gpg-pubkey-$(rpm -q --qf "%{version}-%{release}" gpg-pubkey*)
+      when:
+        - ansible_distribution in ['openSUSE', 'SUSE Linux Enterprise Server']
+        - gpg_key_check_suse.rc == 0

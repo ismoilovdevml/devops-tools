@@ -3,6 +3,7 @@
   hosts: grafana
   become: true
   tasks:
+
     - name: Install dependencies (Debian/Ubuntu)
       ansible.builtin.apt:
         name: "{{ item }}"
@@ -32,12 +33,14 @@
             state: present
       when: ansible_distribution in ['Ubuntu', 'Debian']
 
-    - name: Install Grafana (CentOS/RHEL/Fedora)
+    - name: Install dependencies (CentOS/RHEL/Fedora)
       block:
-        - name: Add Grafana GPG key
-          ansible.builtin.shell: |
-            wget -q -O /etc/yum.repos.d/grafana.repo https://rpm.grafana.com/gpg.key
-            rpm --import /etc/yum.repos.d/grafana.repo
+        - name: Install wget and chkconfig
+          ansible.builtin.yum:
+            name:
+              - wget
+              - chkconfig
+            state: present
 
         - name: Add Grafana repository
           ansible.builtin.copy:

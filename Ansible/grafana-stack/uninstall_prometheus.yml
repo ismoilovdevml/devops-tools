@@ -1,0 +1,70 @@
+---
+- name: Uninstall Prometheus and clean up
+  hosts: prometheus
+  become: yes
+  vars_files:
+    - vars.yml
+  tasks:
+
+    - name: Check if Prometheus service is present
+      ansible.builtin.systemd:
+        name: prometheus
+        state: stopped
+      register: prometheus_service_status
+      ignore_errors: yes
+      failed_when: false
+
+    - name: Stop Prometheus service if it exists
+      ansible.builtin.systemd:
+        name: prometheus
+        state: stopped
+      when: prometheus_service_status.failed is not defined
+
+    - name: Disable Prometheus service if it exists
+      ansible.builtin.systemd:
+        name: prometheus
+        enabled: no
+      when: prometheus_service_status.failed is not defined
+
+    - name: Remove Prometheus systemd service file
+      ansible.builtin.file:
+        path: /etc/systemd/system/prometheus.service
+        state: absent
+
+    - name: Reload systemd daemon to remove Prometheus service
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Remove Prometheus binary
+      ansible.builtin.file:
+        path: /usr/local/bin/prometheus
+        state: absent
+
+    - name: Remove Promtool binary
+      ansible.builtin.file:
+        path: /usr/local/bin/promtool
+        state: absent
+
+    - name: Remove Prometheus directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
+
+    - name: Remove Prometheus archive from /tmp
+      ansible.builtin.file:
+        path: /tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+        state: absent
+
+    - name: Remove extracted Prometheus files from /tmp
+      ansible.builtin.file:
+        path: /tmp/prometheus-{{ prometheus_version }}.linux-amd64
+        state: absent
+
+    - name: Remove Prometheus user
+      ansible.builtin.user:
+        name: prometheus
+        state: absent
+        remove: yes

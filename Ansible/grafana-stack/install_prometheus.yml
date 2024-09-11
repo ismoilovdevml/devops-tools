@@ -2,57 +2,56 @@
 - name: Install Prometheus on Prometheus Servers
   hosts: prometheus
   become: yes
+  vars_files:
+    - vars.yml
   tasks:
 
     - name: Download Prometheus archive
       ansible.builtin.get_url:
-        url: "https://github.com/prometheus/prometheus/releases/download/v2.54.1/prometheus-2.54.1.linux-amd64.tar.gz"
-        dest: "/tmp/prometheus-2.54.1.linux-amd64.tar.gz"
+        url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+        dest: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
 
     - name: Extract Prometheus archive
       ansible.builtin.unarchive:
-        src: "/tmp/prometheus-2.54.1.linux-amd64.tar.gz"
+        src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
         dest: "/tmp"
         remote_src: yes
 
-    - name: Create Prometheus directories
-      ansible.builtin.file:
-        path: "{{ item }}"
-        state: directory
-        owner: prometheus
-        group: prometheus
-        mode: '0755'
-      loop:
-        - /etc/prometheus
-        - /var/lib/prometheus
-
-    - name: Move Prometheus binaries
-      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/prometheus /usr/local/bin/prometheus
+    - name: Move Prometheus binary
+      ansible.builtin.command: mv /tmp/prometheus-{{ prometheus_version }}.linux-amd64/prometheus /usr/local/bin/prometheus
       notify: reload_prometheus
 
+    - name: Ensure Prometheus binary is executable
+      ansible.builtin.file:
+        path: /usr/local/bin/prometheus
+        mode: '0755'
+        owner: prometheus
+        group: prometheus
+
     - name: Move Promtool
-      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/promtool /usr/local/bin/promtool
+      ansible.builtin.command: mv /tmp/prometheus-{{ prometheus_version }}.linux-amd64/promtool /usr/local/bin/promtool
 
     - name: Move prometheus.yml
       ansible.builtin.copy:
-        src: /tmp/prometheus-2.54.1.linux-amd64/prometheus.yml
+        src: /tmp/prometheus-{{ prometheus_version }}.linux-amd64/prometheus.yml
         dest: /etc/prometheus/prometheus.yml
         remote_src: yes
 
     - name: Move console files
-      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/consoles /etc/prometheus/consoles
+      ansible.builtin.command: mv /tmp/prometheus-{{ prometheus_version }}.linux-amd64/consoles /etc/prometheus/consoles
 
     - name: Move console libraries
-      ansible.builtin.command: mv /tmp/prometheus-2.54.1.linux-amd64/console_libraries /etc/prometheus/console_libraries
+      ansible.builtin.command: mv /tmp/prometheus-{{ prometheus_version }}.linux-amd64/console_libraries /etc/prometheus/console_libraries
 
-    - name: Create prometheus user
-      ansible.builtin.user:
-        name: prometheus
-        shell: /bin/false
-        system: yes
-
-    - name: Set permissions for Prometheus
-      ansible.builtin.command: chown -R prometheus:prometheus /etc/prometheus /var/lib/prometheus
+    - name: Set permissions for Prometheus directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+      loop:
+        - /etc/prometheus
+        - /var/lib/prometheus
 
     - name: Create Prometheus systemd service
       ansible.builtin.copy:
@@ -90,9 +89,3 @@
         name: prometheus
         enabled: yes
         state: started
-
-  handlers:
-    - name: reload_prometheus
-      ansible.builtin.systemd:
-        name: prometheus
-        state: restarted

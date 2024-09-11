@@ -1,0 +1,4 @@
+---
+- import_playbook: uninstall_prometheus.yml
+- import_playbook: uninstall_node_exporter.yml
+- import_playbook: uninstall_grafana.yml
