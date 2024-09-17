@@ -1,0 +1,95 @@
+---
+- name: Uninstall and clean up Redis on multiple OS
+  hosts: all
+  become: yes
+  tasks:
+    # Check if Redis is installed
+    - name: Check if Redis is installed
+      ansible.builtin.command: which redis-server
+      register: redis_installed
+      ignore_errors: true
+      failed_when: false
+      changed_when: false
+
+    # Stop Redis service only if installed
+    - name: Stop Redis service if installed
+      ansible.builtin.systemd:
+        name: "{{ 'redis-server' if ansible_distribution in ['Debian', 'Ubuntu'] else 'redis' }}"
+        state: stopped
+      when: redis_installed.rc == 0
+      ignore_errors: yes
+
+    # Uninstall Redis packages (Debian/Ubuntu)
+    - name: Remove Redis packages (Debian/Ubuntu)
+      ansible.builtin.apt:
+        name: redis-server
+        state: absent
+        purge: yes
+      when: redis_installed.rc == 0 and ansible_distribution in ['Debian', 'Ubuntu']
+
+    # Uninstall Redis packages (RHEL/CentOS)
+    - name: Remove Redis packages (RHEL/CentOS)
+      ansible.builtin.yum:
+        name: redis
+        state: absent
+      when: redis_installed.rc == 0 and ansible_distribution in ['CentOS', 'RedHat']
+
+    # Remove Redis user only if it exists
+    - name: Remove Redis user
+      ansible.builtin.user:
+        name: redis
+        state: absent
+      ignore_errors: yes
+
+    # Remove Redis group only if it exists
+    - name: Remove Redis group
+      ansible.builtin.group:
+        name: redis
+        state: absent
+      ignore_errors: yes
+
+    # Remove Redis data, logs, and configuration directories only if they exist
+    - name: Remove Redis data, logs, and configuration directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+        recurse: yes
+      loop:
+        - /var/lib/redis
+        - /var/log/redis
+        - /etc/redis
+        - /var/run/redis
+      when: redis_installed.rc == 0
+      ignore_errors: yes
+
+    # Remove Redis APT repository list
+    - name: Remove Redis APT repository list (Debian/Ubuntu)
+      ansible.builtin.file:
+        path: /etc/apt/sources.list.d/redis.list
+        state: absent
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+      ignore_errors: yes
+
+    # Remove Redis GPG key (Debian/Ubuntu)
+    - name: Remove Redis GPG key (Debian/Ubuntu)
+      ansible.builtin.apt_key:
+        id: "9DC858229FC7DD38854AE2D88D81803C0EBFCD88"
+        state: absent
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+      ignore_errors: yes
+
+    # Remove Redis YUM repository (RHEL/CentOS/Fedora)
+    - name: Remove Redis YUM repository
+      ansible.builtin.file:
+        path: /etc/yum.repos.d/redis.repo
+        state: absent
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+      ignore_errors: yes
+
+    # Remove Redis GPG key (RHEL/CentOS/Fedora)
+    - name: Remove Redis GPG key (RHEL/CentOS/Fedora)
+      ansible.builtin.rpm_key:
+        key: https://packages.redis.io/gpg
+        state: absent
+      when: ansible_distribution in ['CentOS', 'RedHat', 'Fedora']
+      ignore_errors: yes

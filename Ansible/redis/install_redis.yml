@@ -1,0 +1,99 @@
+---
+- name: Install and configure Redis on multiple OS
+  hosts: all
+  become: yes
+  tasks:
+    - name: Gather OS facts
+      ansible.builtin.setup:
+        filter: ansible_distribution*
+
+    # Install Redis on Debian/Ubuntu
+    - name: Install prerequisites (Debian/Ubuntu)
+      apt:
+        name:
+          - lsb-release
+          - curl
+          - gpg
+        state: present
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    - name: Add GPG key for Redis (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        curl -fsSL https://packages.redis.io/gpg | gpg --dearmor > /usr/share/keyrings/redis-archive-keyring.gpg
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    - name: Add Redis APT repository (Debian/Ubuntu)
+      ansible.builtin.shell: |
+        echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/redis.list
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    - name: Update APT and install Redis (Debian/Ubuntu)
+      apt:
+        name: redis-server
+        update_cache: yes
+        state: present
+      when: ansible_distribution in ['Debian', 'Ubuntu']
+
+    # Install Redis on RHEL/CentOS
+    - name: Add Redis YUM repository and GPG key (RHEL/CentOS)
+      block:
+        - name: Add Redis YUM repository
+          copy:
+            content: |
+              [Redis]
+              name=Redis
+              baseurl=https://packages.redis.io/rpm/rhel8
+              enabled=1
+              gpgcheck=1
+              gpgkey=https://packages.redis.io/gpg
+            dest: /etc/yum.repos.d/redis.repo
+            mode: '0644'
+
+        - name: Install Redis
+          yum:
+            name: redis
+            state: present
+            update_cache: yes
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    # Ensure Redis is enabled and started
+    - name: Ensure Redis service is started and enabled
+      systemd:
+        name: "{{ 'redis-server' if ansible_distribution in ['Debian', 'Ubuntu'] else 'redis' }}"
+        state: started
+        enabled: yes
+
+    # Ensure Redis configuration file exists on RHEL/CentOS
+    - name: Create Redis configuration directory (RHEL/CentOS)
+      file:
+        path: /etc/redis
+        state: directory
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    - name: Ensure Redis configuration file exists (RHEL/CentOS)
+      file:
+        path: /etc/redis/redis.conf
+        state: touch
+      when: ansible_distribution in ['CentOS', 'RedHat']
+
+    # Configure Redis to listen on all interfaces
+    - name: Configure Redis to listen on all interfaces
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "^bind 127.0.0.1"
+        line: "bind 0.0.0.0"
+      notify: Restart Redis
+
+    # Set protected-mode to no
+    - name: Set protected-mode to no
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regexp: "^protected-mode"
+        line: "protected-mode no"
+      notify: Restart Redis
+
+  handlers:
+    - name: Restart Redis
+      systemd:
+        name: "{{ 'redis-server' if ansible_distribution in ['Debian', 'Ubuntu'] else 'redis' }}"
+        state: restarted
