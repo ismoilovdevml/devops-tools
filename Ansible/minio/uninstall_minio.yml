@@ -5,13 +5,20 @@
   vars_files:
     - main.yml
   tasks:
+    
+    - name: Check if MinIO service exists
+      command: systemctl is-active --quiet minio
+      register: minio_service_status
+      failed_when: false
+      changed_when: false
+      ignore_errors: yes
 
-    - name: Stop and disable MinIO service
-      systemd:
+    - name: Stop and disable MinIO service if it exists
+      ansible.builtin.systemd:
         name: minio
         state: stopped
         enabled: no
-      ignore_errors: yes
+      when: minio_service_status.rc == 0
 
     - name: Remove MinIO service file
       file:
@@ -19,7 +26,7 @@
         state: absent
 
     - name: Reload systemd daemon
-      systemd:
+      ansible.builtin.systemd:
         daemon_reload: yes
 
     - name: Remove MinIO binary
@@ -36,8 +43,9 @@
       become: yes
       file:
         path: "{{ minio_directory }}"
-        state: absent
+        state: directory
         recurse: yes
+        force: yes
       ignore_errors: yes
 
     - name: Remove MinIO data directory
