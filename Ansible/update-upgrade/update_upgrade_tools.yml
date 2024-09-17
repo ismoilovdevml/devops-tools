@@ -19,6 +19,27 @@
             upgrade: dist
       when: ansible_distribution in ['Ubuntu', 'Debian']
 
+    - name: Install GPG key for EPEL on RHEL
+      block:
+        - name: Install GPG key for EPEL
+          ansible.builtin.rpm_key:
+            state: present
+            key: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_distribution_major_version }}
+      when: ansible_distribution in ['RedHat']
+
+    - name: Install EPEL repository on RHEL (manual download)
+      block:
+        - name: Download EPEL repository RPM for RHEL
+          ansible.builtin.get_url:
+            url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+            dest: "/tmp/epel-release.rpm"
+
+        - name: Install EPEL repository RPM for RHEL
+          ansible.builtin.yum:
+            name: "/tmp/epel-release.rpm"
+            state: present
+      when: ansible_distribution in ['RedHat']
+
     - name: Update and upgrade CentOS/RHEL
       block:
         - name: Update package list
@@ -53,6 +74,9 @@
               - wget
               - vim
               - htop
+              - nano
+              - net-tools
+              - traceroute
             state: present
       when: ansible_distribution in ['Ubuntu', 'Debian']
 
@@ -66,6 +90,9 @@
               - wget
               - vim
               - htop
+              - nano
+              - net-tools
+              - traceroute
             state: present
       when: ansible_distribution in ['CentOS', 'RedHat']
 
@@ -79,5 +106,8 @@
               - wget
               - vim
               - htop
+              - nano
+              - net-tools
+              - traceroute
             state: present
       when: ansible_distribution == 'Fedora'
