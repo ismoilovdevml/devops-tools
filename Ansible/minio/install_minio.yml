@@ -3,7 +3,7 @@
   hosts: minio_servers
   become: yes
   vars_files:
-    - main.yml
+    - vars.yml
   tasks:
 
     - name: Install wget on multiple OS

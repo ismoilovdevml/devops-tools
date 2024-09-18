@@ -8,12 +8,19 @@
 
   tasks:
 
-    - name: Stop Jenkins on Debian/Ubuntu
+    - name: Check if Jenkins service exists on Debian/Ubuntu
       when: ansible_os_family == "Debian"
+      shell: |
+        systemctl list-units --type service --all | grep -w jenkins
+      register: jenkins_service_exists_debian
+      failed_when: jenkins_service_exists_debian.rc > 1
+      ignore_errors: yes
+
+    - name: Stop Jenkins on Debian/Ubuntu if running
+      when: ansible_os_family == "Debian" and jenkins_service_exists_debian.rc == 0
       systemd:
         name: jenkins
         state: stopped
-      ignore_errors: yes
 
     - name: Uninstall Jenkins and Java on Debian/Ubuntu
       when: ansible_os_family == "Debian"
@@ -60,12 +67,19 @@
         recurse: yes
         force: yes
 
-    - name: Stop Jenkins on Red Hat/Fedora/Alma/Rocky
+    - name: Check if Jenkins service exists on Red Hat/Fedora/Alma/Rocky
       when: ansible_os_family == "RedHat"
+      shell: |
+        systemctl list-units --type service --all | grep -w jenkins
+      register: jenkins_service_exists_rhel
+      failed_when: jenkins_service_exists_rhel.rc > 1
+      ignore_errors: yes
+
+    - name: Stop Jenkins on Red Hat/Fedora/Alma/Rocky if running
+      when: ansible_os_family == "RedHat" and jenkins_service_exists_rhel.rc == 0
       systemd:
         name: jenkins
         state: stopped
-      ignore_errors: yes
 
     - name: Uninstall Jenkins and Java on Red Hat/Fedora/Alma/Rocky
       when: ansible_os_family == "RedHat"
@@ -82,18 +96,17 @@
         path: /etc/yum.repos.d/jenkins.repo
         state: absent
 
-    - name: Remove Jenkins key on Red Hat/Fedora/Alma/Rocky
-      when: ansible_os_family == "RedHat"
-      ansible.builtin.command:
-        cmd: rpm -e gpg-pubkey-$(rpm -q --qf "%{version}-%{release}\n" gpg-pubkey | grep jenkins | awk '{print $1}')
-      ignore_errors: yes
+    - name: Remove Jenkins GPG key on Red Hat/Fedora/Alma/Rocky
+      when: ansible_os_family == "RedHat" and jenkins_gpg_key is defined and jenkins_gpg_key is not none
+      ansible.builtin.rpm_key:
+        state: absent
+        key: gpg-pubkey
+      register: jenkins_gpg_key
 
     - name: Remove Jenkins cache, log, and data directories on Red Hat/Fedora/Alma/Rocky
-      when: ansible_os_family == "RedHat"
       ansible.builtin.file:
         path: "{{ item }}"
         state: absent
-        recurse: yes
         force: yes
       loop:
         - /var/cache/jenkins

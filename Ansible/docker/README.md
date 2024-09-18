@@ -7,6 +7,7 @@ This playbook installs Docker on multiple Linux operating systems and provides a
 ### Install Docker
 Run the following command to install Docker on your servers:
 ```bash
+ansible-galaxy collection install community.general
 ansible-playbook -i inventory.ini ./install_docker.yml
 ```
 # Clean up and Uninstall Docker
@@ -23,13 +24,14 @@ This will:
 
 
 # 💻 Supported Linux Operating Systems
+This playbook supports the following Linux distributions:
 * 🐧 **Debian:** 11,12
 * 🐧 **Ubuntu:** 20.04,22.04
 * 🐧 **RHEL:** 7,8
 * 🐧 **Fedora:** 39,40
 
 # ✅ Tested Operating Systems
-
+The playbook has been tested on the following OS versions:
 * ✅**Debian:** 11,12
 * ✅**Ubuntu:** 20.04,22.04
 * ✅**RHEL:** 7,8
@@ -38,4 +40,4 @@ This will:
 * ✅ ansible [core 2.16.3]
 * ❗️ ansible [core 2.17.3] (compatibility issues)
 
-> Note: The playbook assumes you are running Ansible as the root user. For non-root users, ensure you have become privileges configured.
+> Note: The playbook assumes you are running Ansible as the root user. For non-root users, ensure you have `become` privileges configured.
