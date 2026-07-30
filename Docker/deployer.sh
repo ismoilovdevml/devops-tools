@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --image=*)
@@ -32,13 +34,22 @@ while [ $# -gt 0 ]; do
 done
 
 
-echo y | docker container prune
-echo $REGISTRY_TOKEN | docker login $REGISTRY_HOST  -u $REGISTRY_USER --password-stdin
-docker pull $IMAGE
+for required in IMAGE CONTAINER_NAME CONTAINER_PORT SYSTEM_PORT REGISTRY_HOST REGISTRY_USER REGISTRY_TOKEN; do
+  if [ -z "${!required:-}" ]; then
+    printf "Error: --%s is required.\n" "$(echo "$required" | tr '[:upper:]_' '[:lower:]-')" >&2
+    exit 1
+  fi
+done
+
+docker container prune -f
+printf '%s' "$REGISTRY_TOKEN" | docker login "$REGISTRY_HOST" -u "$REGISTRY_USER" --password-stdin
+docker pull "$IMAGE"
 echo "Clean temp Container"
 
-if $(docker ps | awk -v CONTAINER_NAME="$CONTAINER_NAME" 'NR > 1 && $NF == CONTAINER_NAME{ret=1; exit} END{exit !ret}' ); then
-  docker stop "$CONTAINER_NAME" 
+# `docker ps -q` prints nothing when no container matches, so test the output,
+# not the exit status (docker exits 0 either way).
+if [ -n "$(docker ps -aq --filter "name=^${CONTAINER_NAME}$")" ]; then
+  docker stop "$CONTAINER_NAME"
   docker rm -f "$CONTAINER_NAME"
 fi
-docker run -d -p $SYSTEM_PORT:$CONTAINER_PORT --restart=always --name $CONTAINER_NAME $IMAGE
+docker run -d -p "$SYSTEM_PORT:$CONTAINER_PORT" --restart=always --name "$CONTAINER_NAME" "$IMAGE"

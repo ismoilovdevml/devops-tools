@@ -17,7 +17,10 @@ LIGHT_BLUE='\033[1;34m'
 LIGHT_PURPLE='\033[1;35m'
 LIGHT_CYAN='\033[1;36m'
 WHITE='\033[1;37m'
-NC='\033[0m' 
+NC='\033[0m'
+
+# Kubernetes minor version to install from pkgs.k8s.io (override via env).
+K8S_VERSION="${K8S_VERSION:-v1.33}"
 
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}"
@@ -50,7 +53,7 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Installing tools...${NC}"
 echo -e "${LIGHT_BLUE}"
-apt-get install net-tools jq git htop -y
+sudo apt-get install -y net-tools jq git htop
 echo -e "${NC}"
 
 # Load required modules for containerization
@@ -95,7 +98,7 @@ echo -e "${YELLOW}--------------------------------------------------------------
 echo -e "${LIGHT_GREEN}Installing Docker...${NC}"
 echo -e "${LIGHT_BLUE}"
 sudo apt-get update -y
-sudo apt-get install ca-certificates curl gnupg
+sudo apt-get install -y ca-certificates curl gnupg
 sudo install -m 0755 -d /etc/apt/keyrings
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 sudo chmod a+r /etc/apt/keyrings/docker.gpg
@@ -110,15 +113,19 @@ echo -e "${NC}"
 # Adjust Docker socket permissions
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Adjusting Docker permissions...${NC}"
-sudo chmod 666 /var/run/docker.sock
-sudo chown $CURRENT_USERNAME:docker /var/run/docker.sock
+# Add the user to the docker group instead of world-writable chmod 666 on the
+# socket, which grants root-equivalent access to every local user.
+sudo groupadd -f docker
+sudo usermod -aG docker "$CURRENT_USERNAME"
+sudo chown root:docker /var/run/docker.sock
+sudo chmod 660 /var/run/docker.sock
 
 # Configure Docker with overlay2 storage driver and systemd cgroup driver
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Configuring Docker...${NC}"
 echo -e "${LIGHT_BLUE}"
-sudo mkdir -p /etc/systemd/system/docker.service.d
-sudo tee /etc/docker/daemon.json <<EOF
+sudo mkdir -p /etc/systemd/system/docker.service.d /etc/docker
+sudo tee /etc/docker/daemon.json > /dev/null <<EOF
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -141,6 +148,7 @@ echo -e "${NC}"
 echo -e "${LIGHT_GREEN}Configuring containerd...${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_BLUE}"
+sudo mkdir -p /etc/containerd
 containerd config default | sudo tee /etc/containerd/config.toml >/dev/null 2>&1
 sudo sed -i 's/SystemdCgroup \= false/SystemdCgroup \= true/g' /etc/containerd/config.toml
 sudo systemctl restart containerd
@@ -151,10 +159,18 @@ echo -e "${NC}"
 echo -e "${LIGHT_GREEN}Installing Kubernetes (K8s)...${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_BLUE}"
-curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
-sudo apt-add-repository "deb https://apt.kubernetes.io/ kubernetes-xenial main"
-sudo apt update
-sudo apt install -y kubelet kubeadm kubectl
+# NOTE: the legacy apt.kubernetes.io / packages.cloud.google.com repositories
+# were shut down in March 2024 and now return 403. Use pkgs.k8s.io instead.
+# Override the minor version with e.g. K8S_VERSION=v1.32 ./k8s-master.sh
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL "https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/Release.key" \
+  | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+sudo chmod 644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${K8S_VERSION}/deb/ /" \
+  | sudo tee /etc/apt/sources.list.d/kubernetes.list > /dev/null
+sudo chmod 644 /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
 sudo systemctl enable kubelet
 sudo apt-mark hold kubelet kubeadm kubectl
 echo -e "${NC}"

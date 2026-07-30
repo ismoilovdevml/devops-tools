@@ -39,18 +39,24 @@ EOF
 echo -e "${NC}"
 
 echo -e "${GREEN}Enter the domain for your GitLab instance: ${YELLOW}"
-read domain
+read -r domain
 
 echo -e "${GREEN}Enter the server IP address for proxy configuration: ${YELLOW}"
-read server_ip
+read -r server_ip
 
 echo -e "${GREEN}Enter the desired password for the GitLab root user: ${YELLOW}"
-read root_password
+read -rs root_password
+echo
 
+if [ -z "$domain" ] || [ -z "$server_ip" ] || [ -z "$root_password" ]; then
+    echo -e "${LIGHT_RED}Domain, server IP and root password are all required.${NC}" >&2
+    exit 1
+fi
 
 echo -e "${LIGHT_GREEN}Updating system packages...${NC}"
 echo -e "${LIGHT_BLUE}"
-apt-get update && apt-get upgrade
+export DEBIAN_FRONTEND=noninteractive
+apt-get update && apt-get upgrade -y
 echo -e "${NC}"
 
 echo -e "${LIGHT_GREEN}Installing necessary dependencies...${NC}"
@@ -83,32 +89,35 @@ echo -e "${LIGHT_BLUE}"
 gitlab-rails runner "user = User.where(id: 1).first; user.password = '${root_password}'; user.password_confirmation = '${root_password}'; user.save!"
 echo -e "${NC}"
 
-echo -e "${LIGHT_GREEN}Installing and configuring Nginx..."
+echo -e "${LIGHT_GREEN}Installing and configuring Nginx...${NC}"
 echo -e "${LIGHT_BLUE}"
 apt-get install -y nginx
-sudo systemctl enable nginx
+systemctl enable nginx
 systemctl restart nginx
 echo -e "${NC}"
 
-if [ -f /etc/nginx/sites-available/${domain} ]; then
+if [ -f "/etc/nginx/sites-available/${domain}" ]; then
     echo -e "${LIGHT_GREEN}Nginx configuration for ${domain} already exists.${NC}"
 else
-    cat > /etc/nginx/sites-available/${domain} <<EOF
+    # \$host, \$remote_addr, ... are escaped so the shell leaves them alone and
+    # nginx receives its own variables. Unescaped, bash expanded them to empty
+    # strings and produced a config with `proxy_set_header Host ;`.
+    cat > "/etc/nginx/sites-available/${domain}" <<EOF
 server {
     listen 80;
     server_name ${domain};
- 
+
     location / {
         proxy_pass http://${server_ip};
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 EOF
 
-    ln -sf /etc/nginx/sites-available/${domain} /etc/nginx/sites-enabled/${domain}
+    ln -sf "/etc/nginx/sites-available/${domain}" "/etc/nginx/sites-enabled/${domain}"
     nginx -t
     systemctl restart nginx
     echo "Nginx configured successfully for ${domain}."

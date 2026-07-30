@@ -1,0 +1,37 @@
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Ansible
+*.retry
+
+# Secrets / keys
+*.pem
+*.key
+sa_key.json
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp

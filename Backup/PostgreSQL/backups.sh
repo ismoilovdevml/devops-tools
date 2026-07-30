@@ -1,14 +1,19 @@
-#/bin/bash
+#!/bin/bash
+set -euo pipefail
 
-tables=$( sudo -u postgres psql -t -c "select datname from pg_database WHERE datname <> ALL ('{template0,template1,postgres}')")
+BACKUP_ROOT="${BACKUP_ROOT:-/home/user/backups}"
 
-for table_name in $(echo $tables | tr " " "\n")
-do
-        backup_file=$(date +'%Y-%m-%d-%H-%M-%S')
-        backup_dir="/home/user/backups/${table_name}/"
-        echo $backup_dir
-        if [ ! -d $backup_dir ]; then
-                mkdir -p $backup_dir
-        fi
-        sudo -u postgres pg_dump $table_name > "${backup_dir}${backup_file}.sql"
-done
+databases=$(sudo -u postgres psql -t -A -c \
+    "select datname from pg_database WHERE datname <> ALL ('{template0,template1,postgres}')")
+
+while IFS= read -r db_name; do
+    [ -n "$db_name" ] || continue
+
+    backup_file=$(date +'%Y-%m-%d-%H-%M-%S')
+    backup_dir="${BACKUP_ROOT}/${db_name}"
+
+    echo "$backup_dir"
+    mkdir -p "$backup_dir"
+
+    sudo -u postgres pg_dump "$db_name" > "${backup_dir}/${backup_file}.sql"
+done <<< "$databases"

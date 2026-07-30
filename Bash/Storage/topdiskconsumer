@@ -24,7 +24,7 @@
 # If not, see <https://www.gnu.org/licenses/>.
 
 strVersion="0.6";
-cmdLine="$0 $@  ";
+cmdLine="$0 $*  ";
 dbgEcho="false";
 dbgSleep="false";
 cmdTimeout="";
@@ -70,7 +70,7 @@ fnUsage()
     echo -en "\ttop 20 largest directories, and then the top 20 largest files aged over 30 \n";
     echo -en "\tdays.\n\n";
     echo -en "$otagBold \bCommand line arguments:\n\n$ctagBold";
-    echo -en "\t-f --format [format]\n";
+    echo -en "\t-F --format [format]\n";
     echo -en "\t\tFormat headings with the addition of bold markup for use in ticketing system. \n\n";
     echo -en "\t\t$otagBold \bValid options:$ctagBold\n";
     echo -en "\t\t html - format headings with html bold tags\n";
@@ -99,9 +99,9 @@ fnUsage()
     echo -en "\t-m --skipmeta omit metadata such as reserve blocks, start and end time, duration, etc.\n\n";
     echo -en "\t-u --skipunlinked skip report of open handles to deleted files\n\n";
     echo -en "\t-f --skipfiles skip report of largest files\n\n";
-    echo -en "\t-t --temp [directory] Specify an an alternate temp directory when /tmp is too full for temp\n";
+    echo -en "\t-T --temp [directory] Specify an alternate temp directory when /tmp is too full for temp\n";
     echo -en "\t\t files to allow report generation.\n\n";
-    echo -en "\t-v --version display the version number then exit.\n\n"
+    echo -en "\t-V --version display the version number then exit.\n\n"
     echo -en "Please note: the Top [number] Directories report module includes the \"total\" size. This is intentional.\n";
     echo -en "This script can only access files that you have access to; either use sudo or root \n";
     echo -en "to execute it. You could alternatively chmod the script with suid rights, but that may be a\n";
@@ -115,7 +115,7 @@ fnFormat()
     if [[ "$optFormat" =~ html|bbcode|ansi ]] ; then \
       if [ "$optFormat" == "html" ] ; then \
         $dbgEcho "Output will be html formatted.";
-        otagBold="<strong>";--limit
+        otagBold="<strong>";
         ctagBold="</strong>";
       elif [ "$optFormat" == "bbcode" ] ; then \
         $dbgEcho "Output will be bbcode formatted.";
@@ -290,13 +290,13 @@ while [ "$1" != "" ] ; do \
                     fnUsage;
                     exit;
                     ;;
-    -t | --temp )   shift;
+    -T | --temp )   shift;
                     strTemp="$1";
                     if [[ ! -d "$strTemp" ]] ; then \
-                        echo -e "\a\n$otagBold $otagRevRed>>> \t \bSpecified temp directory "$strTemp" does not exist. Please check and correct the path.$ctagBold";
-                        exit 1;
+                        echo -e "\a\n$otagBold $otagRevRed>>> \t \bSpecified temp directory $strTemp does not exist. Please check and correct the path.$ctagBold";
                         echo -e "Your command line: \n";
                         echo -e "\t $cmdLine";
+                        exit 1;
                     fi;
                     fnSetTemp;
                     ;;
@@ -307,7 +307,7 @@ while [ "$1" != "" ] ; do \
                         exit 1;
                     fi;
                     ;;
-    -V | --version )
+    -v | -V | --version )
                     echo "topdiskconsumer version $strVersion.";
                     exit 0;
                     ;;
@@ -332,8 +332,7 @@ if [[ -v strAltRoot ]]; then \
   fi;
   optPath="$strAltRoot";
   strFsMount="$strAltRoot";
-else \
-    if [ ! -v optPath ]; then \
+elif [ ! -v optPath ]; then \
         $dbgEcho "optPath is not set, so setting path automagically."
         $dbgEcho "Current working directory = $PWD"
             strFsMount="$(stat --format="%m" "$PWD")";
@@ -342,29 +341,27 @@ else \
             $dbgEcho "strFsDev=$strFsDev";
             $dbgEcho "strFsMount=$strFsMount";
             $dbgSleep 5;
-    else \
-        if [ ! -d "$optPath" ]; then \
+elif [ ! -d "$optPath" ]; then \
             echo -e "\n\n\t\tYou specified \"$optPath\" which is not extant.\n\n";
             $dbgSleep 5;
             fnUsage;
             exit 1;
-        else \
+else \
             $dbgEcho "You specified the path \"$optPath\", which is extant. OK.";
             strFsMount="$(stat --format="%m" "$optPath")";
             # find the device behind the mount point:
             strFsDev="$(findmnt -n --output=SOURCE --target="$strFsMount")";
             $dbgEcho "The filesystem behind \"$optPath\" is \"$strFsMount\"; running from $strFsMount.";
-        fi;
-    fi;
 fi;
 
 # Is there enough space for sort to run?
 if [[ ! -v strTemp ]]; then \
-    if [ $(df --output=avail /tmp | sed '$!d') -lt  100000 ] ; then \
+    if [ "$(df --output=avail /tmp | sed '$!d')" -lt 100000 ] ; then \
         echo -e "\a\a$otagRed\nThere may not be enough space in /tmp for $otagBold \bsort$ctagBold \b$otagRed \b\bto complete; there is only $(df -h --output=avail /tmp | grep -v Avail) free; consider leveraging the --temp option. $ctagNc" ;
         echo -e "\nThe script will continue after a 15-second pause but the reports may be incomplete.";
         sleep 15;
-        export TMPDIR="$strTemp";
+        # NOTE: do not export TMPDIR here -- --temp was not given, so strTemp is
+        # unset and exporting it would blank out any inherited TMPDIR.
     fi ;
 fi;
 

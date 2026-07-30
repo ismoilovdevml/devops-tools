@@ -8,7 +8,7 @@ env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GAR_LOCATION: us-central1 # TODO: update region of the Artifact Registry
   GKE_CLUSTER: deploy-cluster    # TODO: update to cluster name
-  GKE_ZONE: us-central1	   # TODO: update to cluster zone
+  GKE_ZONE: us-central1    # TODO: update to cluster zone
   DEPLOYMENT_NAME: personal-project # TODO: update to deployment name
   REPOSITORY: apex # TODO: update to Artifact Registry docker repository
   IMAGE: personal-project-container

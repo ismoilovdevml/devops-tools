@@ -24,11 +24,18 @@ sudo apt-get update
 
 sudo apt-get -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-compose
 
-# Adjust Docker socket permissions
-sudo chmod 666 /var/run/docker.sock
-sudo chown $CURRENT_USERNAME:docker /var/run/docker.sock
+# Grant the current user access to the Docker socket.
+# `chmod 666 /var/run/docker.sock` makes the daemon reachable by every local
+# user, which is equivalent to handing out root. Use the docker group instead.
+sudo groupadd -f docker
+sudo usermod -aG docker "$CURRENT_USERNAME"
+sudo chown root:docker /var/run/docker.sock
+sudo chmod 660 /var/run/docker.sock
 
 # Restart and enable Docker service
 sudo systemctl daemon-reload
 sudo systemctl restart docker
 sudo systemctl enable docker
+
+echo "Docker installed. Log out and back in (or run 'newgrp docker') for the"
+echo "docker group membership of '$CURRENT_USERNAME' to take effect."

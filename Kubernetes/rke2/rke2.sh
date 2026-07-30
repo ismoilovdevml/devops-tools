@@ -153,9 +153,10 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Downloading and configuring kube-vip manifest...${NC}"
 echo -e "${LIGHT_BLUE}"
-curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/kube-vip
-cat kube-vip | sed 's/$interface/'$interface'/g; s/$vip/'$vip'/g' > $HOME/kube-vip.yaml
-sudo mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
+curl -sfL -o "$HOME/kube-vip" https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/kube-vip
+sed "s|\$interface|$interface|g; s|\$vip|$vip|g" "$HOME/kube-vip" > "$HOME/kube-vip.yaml"
+# Copy (not move) so $HOME/kube-vip.yaml survives for the scp loop further down.
+sudo cp "$HOME/kube-vip.yaml" /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
 echo -e "${NC}"
 
 # Find/Replace all k3s entries to represent rke2
@@ -168,19 +169,19 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Copying kube-vip manifest to the home directory...${NC}"
 echo -e "${LIGHT_BLUE}"
-sudo cp /var/lib/rancher/rke2/server/manifests/kube-vip.yaml ~/kube-vip.yaml
+sudo cp /var/lib/rancher/rke2/server/manifests/kube-vip.yaml "$HOME/kube-vip.yaml"
 echo -e "${NC}"
 # change owner
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Changing ownership of kube-vip.yaml...${NC}"
 echo -e "${LIGHT_BLUE}"
-sudo chown $user:$user kube-vip.yaml
+sudo chown "$user:$user" "$HOME/kube-vip.yaml"
 echo -e "${NC}"
 # make kube folder to run kubectl later
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Creating .kube directory for kubectl...${NC}"
 echo -e "${LIGHT_BLUE}"
-mkdir ~/.kube
+mkdir -p "$HOME/.kube"
 echo -e "${NC}"
 
 # create the rke2 config file
@@ -188,21 +189,25 @@ echo -e "${YELLOW}--------------------------------------------------------------
 echo -e "${LIGHT_GREEN}Creating RKE2 config directory and config.yaml file...${NC}"
 echo -e "${LIGHT_BLUE}"
 sudo mkdir -p /etc/rancher/rke2
-touch config.yaml
-echo "tls-san:" >> config.yaml 
-echo "  - $vip" >> config.yaml
-echo "  - $master1" >> config.yaml
-echo "  - $master2" >> config.yaml
-echo "  - $master3" >> config.yaml
-echo "write-kubeconfig-mode: 0644" >> config.yaml
-echo "disable:" >> config.yaml
-echo "  - rke2-ingress-nginx" >> config.yaml
+# Write with `>` (not touch + `>>`) so re-running the script does not append a
+# second copy of every key, and write to $HOME because the copy below reads
+# from $HOME rather than the current working directory.
+cat > "$HOME/config.yaml" <<EOF
+tls-san:
+  - $vip
+  - $master1
+  - $master2
+  - $master3
+write-kubeconfig-mode: "0644"
+disable:
+  - rke2-ingress-nginx
+EOF
 echo -e "${NC}"
 # copy config.yaml to rancher directory
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Copying config.yaml to /etc/rancher/rke2 directory...${NC}"
 echo -e "${LIGHT_BLUE}"
-sudo cp ~/config.yaml /etc/rancher/rke2/config.yaml
+sudo cp "$HOME/config.yaml" /etc/rancher/rke2/config.yaml
 echo -e "${NC}"
 
 # update path with rke2-binaries
@@ -234,7 +239,9 @@ mkdir -p /var/lib/rancher/rke2/server/manifests
 mv kube-vip.yaml /var/lib/rancher/rke2/server/manifests/kube-vip.yaml
 mkdir -p /etc/rancher/rke2
 mv config.yaml /etc/rancher/rke2/config.yaml
-echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> ~/.bashrc ; echo 'export PATH=${PATH}:/var/lib/rancher/rke2/bin' >> ~/.bashrc ; echo 'alias k=kubectl' >> ~/.bashrc ; source ~/.bashrc ;
+# \${PATH} is escaped so it stays literal in the remote .bashrc instead of being
+# expanded to the admin machine's PATH before the heredoc is sent.
+echo 'export KUBECONFIG=/etc/rancher/rke2/rke2.yaml' >> ~/.bashrc ; echo 'export PATH=\${PATH}:/var/lib/rancher/rke2/bin' >> ~/.bashrc ; echo 'alias k=kubectl' >> ~/.bashrc ; source ~/.bashrc ;
 curl -sfL https://get.rke2.io | sh -
 systemctl enable rke2-server.service
 systemctl start rke2-server.service
@@ -251,9 +258,9 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Configuring kubeconfig and updating Master1 IP...${NC}"
 echo -e "${LIGHT_BLUE}"
-token=`cat token`
-sudo cat ~/.kube/rke2.yaml | sed 's/127.0.0.1/'$master1'/g' > $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+token=$(cat "$HOME/token")
+sudo sed "s/127.0.0.1/$master1/g" "$HOME/.kube/rke2.yaml" > "$HOME/.kube/config"
+sudo chown "$(id -u):$(id -g)" "$HOME/.kube/config"
 export KUBECONFIG=${HOME}/.kube/config
 sudo cp ~/.kube/config /etc/rancher/rke2/rke2.yaml
 kubectl get nodes -o wide
@@ -274,8 +281,9 @@ echo -e "${LIGHT_BLUE}"
 for newnode in "${masters[@]}"; do
   ssh -tt $user@$newnode -i ~/.ssh/$certName sudo su <<EOF
   mkdir -p /etc/rancher/rke2
-  touch /etc/rancher/rke2/config.yaml
-  echo "token: $token" >> /etc/rancher/rke2/config.yaml
+  # First line uses > so a re-run replaces the file instead of appending a
+  # second (invalid) copy of every key.
+  echo "token: $token" > /etc/rancher/rke2/config.yaml
   echo "server: https://$master1:9345" >> /etc/rancher/rke2/config.yaml
   echo "tls-san:" >> /etc/rancher/rke2/config.yaml
   echo "  - $vip" >> /etc/rancher/rke2/config.yaml
@@ -304,8 +312,9 @@ echo -e "${LIGHT_BLUE}"
 for newnode in "${workers[@]}"; do
   ssh -tt $user@$newnode -i ~/.ssh/$certName sudo su <<EOF
   mkdir -p /etc/rancher/rke2
-  touch /etc/rancher/rke2/config.yaml
-  echo "token: $token" >> /etc/rancher/rke2/config.yaml
+  # First line uses > so a re-run replaces the file instead of appending a
+  # second (invalid) copy of every key.
+  echo "token: $token" > /etc/rancher/rke2/config.yaml
   echo "server: https://$vip:9345" >> /etc/rancher/rke2/config.yaml
   echo "node-label:" >> /etc/rancher/rke2/config.yaml
   echo "  - worker=true" >> /etc/rancher/rke2/config.yaml
@@ -347,8 +356,8 @@ echo -e "${NC}"
 echo -e "${YELLOW}---------------------------------------------------------------------------------------------------------------------${NC}"
 echo -e "${LIGHT_GREEN}Downloading and configuring the MetalLB IP Address Pool...${NC}"
 echo -e "${LIGHT_BLUE}"
-curl -sO https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/ipAddressPool
-cat ipAddressPool | sed 's/$lbrange/'$lbrange'/g' > $HOME/ipAddressPool.yaml
+curl -sfL -o "$HOME/ipAddressPool" https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/ipAddressPool
+sed "s|\$lbrange|$lbrange|g" "$HOME/ipAddressPool" > "$HOME/ipAddressPool.yaml"
 echo -e "${NC}"
 
 # Step 9: Deploy IP Pools and l2Advertisement
@@ -360,7 +369,7 @@ kubectl wait --namespace metallb-system \
                 --for=condition=ready pod \
                 --selector=component=controller \
                 --timeout=1800s
-kubectl apply -f ipAddressPool.yaml
+kubectl apply -f "$HOME/ipAddressPool.yaml"
 kubectl apply -f https://raw.githubusercontent.com/ismoilovdevml/devops-tools/main/Kubernetes/rke2/l2Advertisement.yaml
 echo -e "${NC}"
 
@@ -412,9 +421,12 @@ echo -e "${LIGHT_GREEN}Exposing Rancher as a LoadBalancer service...${NC}"
 echo -e "${LIGHT_BLUE}"
 kubectl get svc -n cattle-system
 kubectl expose deployment rancher --name=rancher-lb --port=443 --type=LoadBalancer -n cattle-system
-while [[ $(kubectl get svc -n cattle-system 'jsonpath={..status.conditions[?(@.type=="Pending")].status}') = "True" ]]; do
+# A Service has no status.conditions, and the original call was also missing the
+# `-o` flag, so the jsonpath was passed as a resource name and the loop exited
+# immediately. Wait for MetalLB to actually assign an ingress IP instead.
+while [[ -z $(kubectl get svc rancher-lb -n cattle-system -o 'jsonpath={.status.loadBalancer.ingress[0].ip}' 2>/dev/null) ]]; do
    sleep 5
-   echo -e " \033[32;5mWaiting for LoadBalancer to come online\033[0m" 
+   echo -e " \033[32;5mWaiting for LoadBalancer to come online\033[0m"
 done
 kubectl get svc -n cattle-system
 

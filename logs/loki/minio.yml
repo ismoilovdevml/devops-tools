@@ -13,7 +13,10 @@ common:
   replication_factor: 1  # Set replication factor to 1 for a single instance
 
 storage_config:
-  boltdb_shipper:
+  # schema_config below uses `store: tsdb`, so the shipper must be tsdb_shipper.
+  # A boltdb_shipper block here is silently ignored and the index lands in the
+  # default directory instead of /loki/index.
+  tsdb_shipper:
     active_index_directory: /loki/index
     cache_location: /loki/index_cache
     resync_interval: 5s
@@ -28,7 +31,7 @@ schema_config:
       object_store: s3
       schema: v13
       index:
-	prefix: index_
+        prefix: index_
         period: 24h
 
 ruler:
